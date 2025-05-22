@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Basic Platformer Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+            color: #e94560;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .game-container {
+            position: relative;
+            margin: 20px auto;
+            box-shadow: 0 0 20px rgba(233, 69, 96, 0.5);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+            background: linear-gradient(45deg, #0f0f1a, #1a1a2e);
+        }
+
+        .ui-container {
+            width: 100%;
+            max-width: 600px;
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            color: #fff;
+            font-size: 18px;
+            text-shadow: 0 0 5px rgba(233, 69, 96, 0.7);
+        }
+
+        .start-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 10, 20, 0.85);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
+            text-align: center;
+            z-index: 10;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            color: #e94560;
+            text-shadow: 0 0 10px rgba(233, 69, 96, 0.7);
+        }
+
+        p {
+            margin: 10px 0;
+            font-size: 1.2rem;
+        }
+
+        button {
+            background: linear-gradient(45deg, #e94560, #c73e6b);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 10px;
+            font-size: 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 10px rgba(233, 69, 96, 0.5);
+        }
+
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(233, 69, 96, 0.8);
+        }
+
+        .controls {
+            margin-top: 20px;
+            font-size: 0.9rem;
+            color: #ccc;
+        }
+
+        @media (max-width: 600px) {
+            .game-container {
+                width: 95vw;
+                height: auto;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .ui-container {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Basic Platformer Game</h1>
+    
+    <div class="game-container">
+        <canvas id="gameCanvas"></canvas>
+        
+        <div class="start-screen" id="startScreen">
+            <h1>Platformer Game</h1>
+            <p>Use Arrow Keys or A/D to move left and right</p>
+            <p>Press Space or Up Arrow to jump</p>
+            <button id="startButton">Start Game</button>
+        </div>
+    </div>
+
+    <script>
+        // Game Configuration
+        const config = {
+            canvasWidth: 800,
+            canvasHeight: 400,
+            gravity: 0.5,
+            playerSpeed: 5,
+            jumpForce: 12,
+            groundHeight: 40,
+            responsive: true
+        };
+
+        // Game State
+        const gameState = {
+            player: {
+                x: 0,
+                y: 0,
+                width: 30,
+                height: 50,
+                velocityX: 0,
+                velocityY: 0,
+                isJumping: false,
+                color: '#e94560'
+            },
+            keys: {
+                left: false,
+                right: false,
+                jump: false
+            },
+            lastRenderTime: 0,
+            gameStarted: false
+        };
+
+        // DOM Elements
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const startScreen = document.getElementById('startScreen');
+        const startButton = document.getElementById('startButton');
+
+        // Initialize canvas size
+        function setupCanvas() {
+            if (config.responsive) {
+                const containerWidth = Math.min(window.innerWidth * 0.95, config.canvasWidth);
+                const containerHeight = Math.min(window.innerHeight * 0.7, config.canvasHeight);
+                
+                canvas.width = containerWidth;
+                canvas.height = containerHeight;
+            } else {
+                canvas.width = config.canvasWidth;
+                canvas.height = config.canvasHeight;
+            }
+        }
+
+        // Initialize game
+        function initGame() {
+            setupCanvas();
+            
+            // Set player initial position
+            gameState.player.x = canvas.width / 2 - gameState.player.width / 2;
+            gameState.player.y = canvas.height - config.groundHeight - gameState.player.height;
+            
+            // Reset player velocity
+            gameState.player.velocityX = 0;
+            gameState.player.velocityY = 0;
+            gameState.player.isJumping = false;
+            
+            // Start game loop
+            gameState.gameStarted = true;
+            window.requestAnimationFrame(gameLoop);
+        }
+
+        // Update game state
+        function update() {
+            // Apply horizontal movement based on keys pressed
+            gameState.player.velocityX = 0;
+            
+            if (gameState.keys.left) {
+                gameState.player.velocityX = -config.playerSpeed;
+            }
+            
+            if (gameState.keys.right) {
+                gameState.player.velocityX = config.playerSpeed;
+            }
+            
+            // Apply jump if jump key is pressed and player is not already jumping
+            if (gameState.keys.jump && !gameState.player.isJumping) {
+                gameState.player.velocityY = -config.jumpForce;
+                gameState.player.isJumping = true;
+            }
+            
+            // Apply gravity
+            gameState.player.velocityY += config.gravity;
+            
+            // Update player position
+            gameState.player.x += gameState.player.velocityX;
+            gameState.player.y += gameState.player.velocityY;
+            
+            // Check for ground collision
+            const groundY = canvas.height - config.groundHeight;
+            if (gameState.player.y + gameState.player.height > groundY) {
+                gameState.player.y = groundY - gameState.player.height;
+                gameState.player.velocityY = 0;
+                gameState.player.isJumping = false;
+            }
+            
+            // Check for wall collision
+            if (gameState.player.x < 0) {
+                gameState.player.x = 0;
+            } else if (gameState.player.x + gameState.player.width > canvas.width) {
+                gameState.player.x = canvas.width - gameState.player.width;
+            }
+        }
+
+        // Draw game elements
+        function draw() {
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw ground
+            ctx.fillStyle = '#4a4a6a';
+            ctx.fillRect(0, canvas.height - config.groundHeight, canvas.width, config.groundHeight);
+            
+            // Draw player
+            ctx.fillStyle = gameState.player.color;
+            ctx.shadowColor = 'rgba(233, 69, 96, 0.8)';
+            ctx.shadowBlur = 10;
+            ctx.fillRect(
+                gameState.player.x, 
+                gameState.player.y, 
+                gameState.player.width, 
+                gameState.player.height
+            );
+            ctx.shadowBlur = 0;
+        }
+
+        // Game loop
+        function gameLoop(currentTime) {
+            if (!gameState.gameStarted) return;
+            
+            window.requestAnimationFrame(gameLoop);
+            
+            // Calculate time since last render
+            const timeSinceLastRender = currentTime - gameState.lastRenderTime;
+            
+            // Only update at 60 FPS (approximately 16.67ms between frames)
+            if (timeSinceLastRender < 16) return;
+            
+            // Update last render time
+            gameState.lastRenderTime = currentTime;
+            
+            // Update game state
+            update();
+            
+            // Draw game
+            draw();
+        }
+
+        // Handle keyboard input (keydown)
+        function handleKeydown(e) {
+            switch (e.keyCode) {
+                // Left arrow or A
+                case 37:
+                case 65:
+                    gameState.keys.left = true;
+                    break;
+                // Right arrow or D    
+                case 39:
+                case 68:
+                    gameState.keys.right = true;
+                    break;
+                // Up arrow, W, or Space
+                case 38:
+                case 87:
+                case 32:
+                    gameState.keys.jump = true;
+                    break;
+            }
+        }
+
+        // Handle keyboard input (keyup)
+        function handleKeyup(e) {
+            switch (e.keyCode) {
+                // Left arrow or A
+                case 37:
+                case 65:
+                    gameState.keys.left = false;
+                    break;
+                // Right arrow or D    
+                case 39:
+                case 68:
+                    gameState.keys.right = false;
+                    break;
+                // Up arrow, W, or Space
+                case 38:
+                case 87:
+                case 32:
+                    gameState.keys.jump = false;
+                    break;
+            }
+        }
+
+        // Event listeners
+        window.addEventListener('keydown', handleKeydown);
+        window.addEventListener('keyup', handleKeyup);
+        window.addEventListener('resize', setupCanvas);
+        startButton.addEventListener('click', () => {
+            startScreen.classList.add('hidden');
+            initGame();
+        });
+
+        // Setup canvas initially
+        setupCanvas();
+    </script>
+</body>
+</html>
