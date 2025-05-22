@@ -213,6 +213,7 @@
             <p>Use Arrow Keys or WASD to move</p>
             <p>Collect food to grow and earn points</p>
             <p>Watch out for special power-ups!</p>
+            <p>Avoid enemy characters or defeat them with immunity</p>
             <button id="startButton">Start Game</button>
             <div class="controls">
                 <p>P: Pause Game | M: Toggle Sound</p>
@@ -263,6 +264,15 @@
             gameSpeed: config.initialSpeed,
             powerUp: null,
             particles: [],
+            enemies: [],
+            enemyTypes: [
+                { type: 'crawler', color: '#ff4757', speed: 0.5, size: 0.9, movementPattern: 'random', image: 'crawler' },
+                { type: 'hunter', color: '#ffa502', speed: 0.7, size: 1.0, movementPattern: 'follow', image: 'hunter' },
+                { type: 'patrol', color: '#1e90ff', speed: 0.6, size: 1.1, movementPattern: 'patrol', image: 'patrol' }
+            ],
+            enemySpawnRate: 0.004, // Chance per frame to spawn enemy when below max
+            maxEnemies: 3, // Maximum number of enemies at once
+            enemyImages: {}, // Will store SVG data for enemy types
             foodTypes: [
                 { type: 'regular', color: '#e94560', points: 1, probability: 0.7, size: 1 },
                 { type: 'bonus', color: '#ffbd69', points: 3, probability: 0.2, size: 1.2 },
@@ -312,6 +322,42 @@
             }
         }
 
+        // Initialize enemy images (simulating AI-generated images with SVG)
+        function initEnemyImages() {
+            // Crawler enemy - circular shape with eyes
+            gameState.enemyImages.crawler = `
+                <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="20" cy="20" r="18" fill="#ff4757"/>
+                    <circle cx="12" cy="15" r="4" fill="white"/>
+                    <circle cx="12" cy="15" r="2" fill="black"/>
+                    <circle cx="28" cy="15" r="4" fill="white"/>
+                    <circle cx="28" cy="15" r="2" fill="black"/>
+                    <path d="M 10 25 Q 20 35 30 25" stroke="black" stroke-width="2" fill="transparent"/>
+                </svg>`;
+                
+            // Hunter enemy - triangular predator shape
+            gameState.enemyImages.hunter = `
+                <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+                    <polygon points="20,5 35,35 5,35" fill="#ffa502"/>
+                    <circle cx="15" cy="20" r="3" fill="white"/>
+                    <circle cx="15" cy="20" r="1.5" fill="black"/>
+                    <circle cx="25" cy="20" r="3" fill="white"/>
+                    <circle cx="25" cy="20" r="1.5" fill="black"/>
+                    <path d="M 15 28 Q 20 32 25 28" stroke="black" stroke-width="1.5" fill="transparent"/>
+                </svg>`;
+                
+            // Patrol enemy - square shape with determined expression
+            gameState.enemyImages.patrol = `
+                <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="5" y="5" width="30" height="30" rx="4" fill="#1e90ff"/>
+                    <circle cx="15" cy="15" r="3" fill="white"/>
+                    <circle cx="15" cy="15" r="1.5" fill="black"/>
+                    <circle cx="25" cy="15" r="3" fill="white"/>
+                    <circle cx="25" cy="15" r="1.5" fill="black"/>
+                    <rect x="12" y="25" width="16" height="4" fill="black"/>
+                </svg>`;
+        }
+
         // Initialize game
         function initGame() {
             setupCanvas();
@@ -328,6 +374,7 @@
             gameState.gameOver = false;
             gameState.gameSpeed = config.initialSpeed;
             gameState.particles = [];
+            gameState.enemies = [];
             gameState.activePowerUp = null;
             gameState.easterEggActivated = false;
             
@@ -335,6 +382,9 @@
                 clearTimeout(gameState.powerUpTimer);
                 gameState.powerUpTimer = null;
             }
+            
+            // Initialize enemy images
+            initEnemyImages();
             
             // Load high score from localStorage
             const savedHighScore = localStorage.getItem('snakeHighScore');
@@ -401,6 +451,56 @@
                     (position.x === gameState.food.x && position.y === gameState.food.y));
             
             gameState.powerUp = { ...position, ...powerUpType };
+        }
+        
+        // Generate enemy at random position
+        function generateEnemy() {
+            // Don't spawn if we're at max enemies
+            if (gameState.enemies.length >= gameState.maxEnemies) {
+                return;
+            }
+            
+            // Select random enemy type
+            const enemyType = gameState.enemyTypes[Math.floor(Math.random() * gameState.enemyTypes.length)];
+            
+            // Generate random position that doesn't overlap with snake, food, or power-up
+            let position;
+            do {
+                position = {
+                    x: Math.floor(Math.random() * (canvas.width / config.gridSize)) * config.gridSize,
+                    y: Math.floor(Math.random() * (canvas.height / config.gridSize)) * config.gridSize
+                };
+            } while (
+                isPositionOccupied(position) || 
+                (position.x === gameState.food.x && position.y === gameState.food.y) ||
+                (gameState.powerUp && position.x === gameState.powerUp.x && position.y === gameState.powerUp.y) ||
+                // Don't spawn too close to snake head
+                Math.abs(position.x - gameState.snake[0].x) < config.gridSize * 3 &&
+                Math.abs(position.y - gameState.snake[0].y) < config.gridSize * 3
+            );
+            
+            // For patrol pattern, determine a patrol path
+            let patrolPath = null;
+            if (enemyType.movementPattern === 'patrol') {
+                // Create a simple patrol line
+                const direction = Math.random() < 0.5 ? 'horizontal' : 'vertical';
+                const patrolLength = Math.floor(Math.random() * 5) + 3; // 3-7 squares
+                patrolPath = {
+                    direction: direction,
+                    length: patrolLength * config.gridSize,
+                    current: 0,
+                    increasing: true
+                };
+            }
+            
+            // Add enemy to game state
+            gameState.enemies.push({
+                ...position,
+                ...enemyType,
+                targetDirection: Math.random() < 0.5 ? 'right' : 'left', // Initial random direction
+                animationOffset: Math.random() * 1000, // For slightly different animation timing
+                patrolPath: patrolPath
+            });
         }
 
         // Check if position is occupied by snake
@@ -502,8 +602,165 @@
                 gameState.snake.pop();
             }
             
+            // Update enemies
+            updateEnemies();
+            
+            // Randomly spawn enemies if we're below max
+            if (gameState.enemies.length < gameState.maxEnemies && Math.random() < gameState.enemySpawnRate) {
+                generateEnemy();
+            }
+            
+            // Check for enemy collisions with snake head
+            checkEnemyCollisions();
+            
             // Update particles
             updateParticles();
+        }
+        
+        // Update enemy positions based on their movement patterns
+        function updateEnemies() {
+            gameState.enemies.forEach(enemy => {
+                // Calculate movement increment based on enemy speed
+                const moveIncrement = enemy.speed * config.gridSize / 20;
+                
+                // Apply different movement patterns
+                switch (enemy.movementPattern) {
+                    case 'random':
+                        // Randomly change direction sometimes
+                        if (Math.random() < 0.02) {
+                            const directions = ['up', 'down', 'left', 'right'];
+                            enemy.targetDirection = directions[Math.floor(Math.random() * directions.length)];
+                        }
+                        
+                        // Move in current direction
+                        moveEnemy(enemy, enemy.targetDirection, moveIncrement);
+                        
+                        // Bounce off walls
+                        if (enemy.x < 0) {
+                            enemy.x = 0;
+                            enemy.targetDirection = 'right';
+                        }
+                        if (enemy.x > canvas.width - config.gridSize) {
+                            enemy.x = canvas.width - config.gridSize;
+                            enemy.targetDirection = 'left';
+                        }
+                        if (enemy.y < 0) {
+                            enemy.y = 0;
+                            enemy.targetDirection = 'down';
+                        }
+                        if (enemy.y > canvas.height - config.gridSize) {
+                            enemy.y = canvas.height - config.gridSize;
+                            enemy.targetDirection = 'up';
+                        }
+                        break;
+                        
+                    case 'follow':
+                        // Calculate direction towards snake head
+                        const head = gameState.snake[0];
+                        
+                        // Only update direction occasionally to make movement less perfect
+                        if (Math.random() < 0.05) {
+                            if (Math.abs(enemy.x - head.x) > Math.abs(enemy.y - head.y)) {
+                                // Move horizontally
+                                enemy.targetDirection = enemy.x < head.x ? 'right' : 'left';
+                            } else {
+                                // Move vertically
+                                enemy.targetDirection = enemy.y < head.y ? 'down' : 'up';
+                            }
+                        }
+                        
+                        // Move towards player
+                        moveEnemy(enemy, enemy.targetDirection, moveIncrement);
+                        break;
+                        
+                    case 'patrol':
+                        if (enemy.patrolPath.direction === 'horizontal') {
+                            // Move horizontally
+                            const direction = enemy.patrolPath.increasing ? 'right' : 'left';
+                            moveEnemy(enemy, direction, moveIncrement);
+                            
+                            // Update patrol path position
+                            enemy.patrolPath.current += enemy.patrolPath.increasing ? moveIncrement : -moveIncrement;
+                            
+                            // Reverse direction at path ends
+                            if (enemy.patrolPath.current >= enemy.patrolPath.length) {
+                                enemy.patrolPath.increasing = false;
+                            } else if (enemy.patrolPath.current <= 0) {
+                                enemy.patrolPath.increasing = true;
+                            }
+                        } else {
+                            // Move vertically
+                            const direction = enemy.patrolPath.increasing ? 'down' : 'up';
+                            moveEnemy(enemy, direction, moveIncrement);
+                            
+                            // Update patrol path position
+                            enemy.patrolPath.current += enemy.patrolPath.increasing ? moveIncrement : -moveIncrement;
+                            
+                            // Reverse direction at path ends
+                            if (enemy.patrolPath.current >= enemy.patrolPath.length) {
+                                enemy.patrolPath.increasing = false;
+                            } else if (enemy.patrolPath.current <= 0) {
+                                enemy.patrolPath.increasing = true;
+                            }
+                        }
+                        break;
+                }
+            });
+        }
+        
+        // Move enemy in specified direction
+        function moveEnemy(enemy, direction, amount) {
+            switch (direction) {
+                case 'up':
+                    enemy.y -= amount;
+                    break;
+                case 'down':
+                    enemy.y += amount;
+                    break;
+                case 'left':
+                    enemy.x -= amount;
+                    break;
+                case 'right':
+                    enemy.x += amount;
+                    break;
+            }
+        }
+        
+        // Check for collisions between snake and enemies
+        function checkEnemyCollisions() {
+            const head = gameState.snake[0];
+            
+            // Calculate approximate collision (with some leeway for smoother gameplay)
+            const collisionDistance = config.gridSize * 0.7;
+            
+            for (let i = gameState.enemies.length - 1; i >= 0; i--) {
+                const enemy = gameState.enemies[i];
+                
+                // Check if snake head collides with enemy
+                const dx = (head.x + config.gridSize/2) - (enemy.x + config.gridSize/2);
+                const dy = (head.y + config.gridSize/2) - (enemy.y + config.gridSize/2);
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < collisionDistance) {
+                    // If player has immunity, destroy the enemy
+                    if (gameState.activePowerUp && gameState.activePowerUp.type === 'immunity') {
+                        // Create particles for explosion effect
+                        createParticles(enemy.x + config.gridSize/2, enemy.y + config.gridSize/2, 
+                                      enemy.color, 20);
+                        
+                        // Remove the enemy
+                        gameState.enemies.splice(i, 1);
+                        
+                        // Give player some points
+                        gameState.score += 10;
+                        updateScore();
+                    } else {
+                        // Game over on collision
+                        handleGameOver();
+                        return;
+                    }
+                }
+            }
         }
 
         // Activate power-up
@@ -749,6 +1006,52 @@
                 ctx.beginPath();
                 ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
                 ctx.fill();
+            });
+            
+            // Draw enemies
+            gameState.enemies.forEach(enemy => {
+                // Create pulsating effect based on enemy animation offset
+                const pulseFactor = 1 + 0.1 * Math.sin((Date.now() + enemy.animationOffset) / 200);
+                const size = config.gridSize * enemy.size * pulseFactor;
+                
+                // Apply glow effect
+                ctx.shadowColor = enemy.color;
+                ctx.shadowBlur = 10;
+                
+                // Create SVG image if not already cached
+                if (!enemy.svgImage) {
+                    // Create a data URL from the SVG
+                    const svgBlob = new Blob([gameState.enemyImages[enemy.image]], { type: 'image/svg+xml' });
+                    const url = URL.createObjectURL(svgBlob);
+                    
+                    // Create and cache the image
+                    const img = new Image();
+                    img.src = url;
+                    enemy.svgImage = { img, url };
+                }
+                
+                // If the image is loaded, draw it
+                if (enemy.svgImage && enemy.svgImage.img.complete) {
+                    ctx.drawImage(
+                        enemy.svgImage.img,
+                        enemy.x - (size - config.gridSize) / 2,
+                        enemy.y - (size - config.gridSize) / 2,
+                        size,
+                        size
+                    );
+                } else {
+                    // Fallback if image not loaded yet
+                    ctx.fillStyle = enemy.color;
+                    ctx.beginPath();
+                    ctx.arc(
+                        enemy.x + config.gridSize / 2,
+                        enemy.y + config.gridSize / 2,
+                        size / 2, 0, Math.PI * 2
+                    );
+                    ctx.fill();
+                }
+                
+                ctx.shadowBlur = 0;
             });
             
             ctx.globalAlpha = 1;
