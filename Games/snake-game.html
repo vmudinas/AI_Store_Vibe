@@ -195,6 +195,7 @@
 <body>
     <div class="ui-container">
         <div id="score">Score: 0</div>
+        <div id="lives">Lives: 3</div>
         <div id="high-score">High Score: 0</div>
     </div>
     
@@ -257,6 +258,7 @@
             food: { x: 0, y: 0, type: 'regular' },
             score: 0,
             highScore: 0,
+            lives: 3, // Initial lives count
             gameOver: false,
             paused: false,
             lastRenderTime: 0,
@@ -284,6 +286,7 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const scoreElement = document.getElementById('score');
+        const livesElement = document.getElementById('lives');
         const highScoreElement = document.getElementById('high-score');
         const finalScoreElement = document.getElementById('finalScore');
         const startScreen = document.getElementById('startScreen');
@@ -330,6 +333,7 @@
             gameState.particles = [];
             gameState.activePowerUp = null;
             gameState.easterEggActivated = false;
+            gameState.lives = 3; // Reset lives to initial amount
             
             if (gameState.powerUpTimer) {
                 clearTimeout(gameState.powerUpTimer);
@@ -348,6 +352,9 @@
             
             // Update score display
             updateScore();
+            
+            // Update lives display
+            updateLives();
             
             // Start game loop
             window.requestAnimationFrame(gameLoop);
@@ -568,6 +575,30 @@
             }
         }
 
+        // Reset snake position after losing a life
+        function resetSnakePosition() {
+            // Create new snake at center
+            gameState.snake = [
+                { x: Math.floor(canvas.width / config.gridSize / 2) * config.gridSize, 
+                  y: Math.floor(canvas.height / config.gridSize / 2) * config.gridSize }
+            ];
+            
+            // Reset direction
+            gameState.direction = 'right';
+            gameState.nextDirection = 'right';
+            
+            // Clear any active power-ups
+            if (gameState.powerUpTimer) {
+                clearTimeout(gameState.powerUpTimer);
+                gameState.powerUpTimer = null;
+            }
+            gameState.activePowerUp = null;
+            powerUpIndicator.classList.remove('active');
+            
+            // Generate new food
+            generateFood();
+        }
+
         // Update particles
         function updateParticles() {
             for (let i = gameState.particles.length - 1; i >= 0; i--) {
@@ -585,28 +616,52 @@
 
         // Handle game over
         function handleGameOver() {
-            gameState.gameOver = true;
+            // Decrease lives
+            gameState.lives--;
+            updateLives();
             
-            // Update high score if needed
-            if (gameState.score > gameState.highScore) {
-                gameState.highScore = gameState.score;
-                localStorage.setItem('snakeHighScore', gameState.highScore);
-                highScoreElement.textContent = `High Score: ${gameState.highScore}`;
+            // Create explosion particles at the snake's head
+            createParticles(
+                gameState.snake[0].x + config.gridSize/2,
+                gameState.snake[0].y + config.gridSize/2,
+                '#ff4d4d',
+                30
+            );
+            
+            // Check if player has remaining lives
+            if (gameState.lives <= 0) {
+                // Game over - no lives left
+                gameState.gameOver = true;
+                
+                // Update high score if needed
+                if (gameState.score > gameState.highScore) {
+                    gameState.highScore = gameState.score;
+                    localStorage.setItem('snakeHighScore', gameState.highScore);
+                    highScoreElement.textContent = `High Score: ${gameState.highScore}`;
+                }
+                
+                // Update final score
+                finalScoreElement.textContent = gameState.score;
+                
+                // Update high scores list
+                updateHighScoresList();
+                
+                // Show game over screen
+                gameOverScreen.classList.remove('hidden');
+            } else {
+                // Player still has lives - reset snake and continue
+                resetSnakePosition();
             }
-            
-            // Update final score
-            finalScoreElement.textContent = gameState.score;
-            
-            // Update high scores list
-            updateHighScoresList();
-            
-            // Show game over screen
-            gameOverScreen.classList.remove('hidden');
         }
 
         // Update score display
         function updateScore() {
             scoreElement.textContent = `Score: ${gameState.score}`;
+        }
+
+        // Update lives display
+        function updateLives() {
+            livesElement.textContent = `Lives: ${gameState.lives}`;
         }
 
         // Update high scores list
