@@ -5,3 +5,9 @@ This repo is used to play around LLM  and agentic code agents.
 HTML, Javascript and css snake game. 
 Done with CLONE => Claude 3.7 model. One shot, coded in less than 20 min. 
 https://www.youtube.com/watch?v=cOt79RWZ3yU&ab_channel=Vitas
+
+### Features
+- Responsive gameplay with adjustable speed
+- Power-ups and special food types
+- AI-generated snake head sprite that follows movement direction
+- Score tracking and high score persistence

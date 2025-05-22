@@ -658,11 +658,35 @@
             gameState.snake.forEach((segment, index) => {
                 // Head has different style (use sprite for head)
                 if (index === 0 && gameState.spriteLoaded) {
+                    // Save the current canvas state
+                    ctx.save();
+                    
+                    // Translate to the center of the head segment for rotation
+                    const centerX = segment.x + config.gridSize / 2;
+                    const centerY = segment.y + config.gridSize / 2;
+                    ctx.translate(centerX, centerY);
+                    
+                    // Rotate based on direction
+                    switch(gameState.direction) {
+                        case 'up':
+                            ctx.rotate(-Math.PI/2); // 90 degrees counter-clockwise
+                            break;
+                        case 'down':
+                            ctx.rotate(Math.PI/2); // 90 degrees clockwise
+                            break;
+                        case 'left':
+                            ctx.rotate(Math.PI); // 180 degrees
+                            break;
+                        case 'right':
+                            // No rotation needed as this is the default
+                            break;
+                    }
+                    
+                    // Translate back for drawing
+                    ctx.translate(-centerX, -centerY);
+                    
                     // Apply color tint for easter egg if active
                     if (gameState.easterEggActivated) {
-                        // Save the current canvas state
-                        ctx.save();
-                        
                         // Create a colored rectangle for tinting
                         ctx.fillStyle = `hsl(${(Date.now() / 20) % 360}, 100%, 50%)`;
                         ctx.globalAlpha = 0.7;
@@ -672,9 +696,6 @@
                         ctx.globalCompositeOperation = "lighter";
                         ctx.globalAlpha = 1.0;
                         ctx.drawImage(gameState.playerSprite, segment.x, segment.y, config.gridSize, config.gridSize);
-                        
-                        // Restore the canvas state
-                        ctx.restore();
                     } else {
                         // Draw the sprite normally with glow effect
                         ctx.shadowColor = 'rgba(233, 69, 96, 0.8)';
@@ -682,6 +703,9 @@
                         ctx.drawImage(gameState.playerSprite, segment.x, segment.y, config.gridSize, config.gridSize);
                         ctx.shadowBlur = 0;
                     }
+                    
+                    // Restore the canvas state
+                    ctx.restore();
                 } else {
                     // Body segments remain the same
                     if (index === 0) {
