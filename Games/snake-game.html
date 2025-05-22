@@ -263,6 +263,8 @@
             gameSpeed: config.initialSpeed,
             powerUp: null,
             particles: [],
+            playerSprite: null, // Store player sprite image
+            spriteLoaded: false, // Flag to track if sprite is loaded
             foodTypes: [
                 { type: 'regular', color: '#e94560', points: 1, probability: 0.7, size: 1 },
                 { type: 'bonus', color: '#ffbd69', points: 3, probability: 0.2, size: 1.2 },
@@ -316,6 +318,11 @@
         function initGame() {
             setupCanvas();
             
+            // Load the player sprite if not already loaded
+            if (!gameState.spriteLoaded) {
+                loadPlayerSprite();
+            }
+            
             // Create initial snake
             gameState.snake = [
                 { x: Math.floor(canvas.width / config.gridSize / 2) * config.gridSize, 
@@ -351,6 +358,15 @@
             
             // Start game loop
             window.requestAnimationFrame(gameLoop);
+        }
+
+        // Load player sprite
+        function loadPlayerSprite() {
+            gameState.playerSprite = new Image();
+            gameState.playerSprite.onload = function() {
+                gameState.spriteLoaded = true;
+            };
+            gameState.playerSprite.src = 'assets/snake_head_sprite.png';
         }
 
         // Generate food at random position
@@ -640,41 +656,94 @@
             
             // Draw snake
             gameState.snake.forEach((segment, index) => {
-                // Head has different style
-                if (index === 0) {
-                    ctx.fillStyle = gameState.easterEggActivated ? 
-                        `hsl(${(Date.now() / 20) % 360}, 100%, 50%)` : '#e94560';
+                // Head has different style (use sprite for head)
+                if (index === 0 && gameState.spriteLoaded) {
+                    // Save the current canvas state
+                    ctx.save();
+                    
+                    // Translate to the center of the head segment for rotation
+                    const centerX = segment.x + config.gridSize / 2;
+                    const centerY = segment.y + config.gridSize / 2;
+                    ctx.translate(centerX, centerY);
+                    
+                    // Rotate based on direction
+                    switch(gameState.direction) {
+                        case 'up':
+                            ctx.rotate(-Math.PI/2); // 90 degrees counter-clockwise
+                            break;
+                        case 'down':
+                            ctx.rotate(Math.PI/2); // 90 degrees clockwise
+                            break;
+                        case 'left':
+                            ctx.rotate(Math.PI); // 180 degrees
+                            break;
+                        case 'right':
+                            // No rotation needed as this is the default
+                            break;
+                    }
+                    
+                    // Translate back for drawing
+                    ctx.translate(-centerX, -centerY);
+                    
+                    // Apply color tint for easter egg if active
+                    if (gameState.easterEggActivated) {
+                        // Create a colored rectangle for tinting
+                        ctx.fillStyle = `hsl(${(Date.now() / 20) % 360}, 100%, 50%)`;
+                        ctx.globalAlpha = 0.7;
+                        ctx.fillRect(segment.x, segment.y, config.gridSize, config.gridSize);
+                        
+                        // Draw the sprite with composition
+                        ctx.globalCompositeOperation = "lighter";
+                        ctx.globalAlpha = 1.0;
+                        ctx.drawImage(gameState.playerSprite, segment.x, segment.y, config.gridSize, config.gridSize);
+                    } else {
+                        // Draw the sprite normally with glow effect
+                        ctx.shadowColor = 'rgba(233, 69, 96, 0.8)';
+                        ctx.shadowBlur = 10;
+                        ctx.drawImage(gameState.playerSprite, segment.x, segment.y, config.gridSize, config.gridSize);
+                        ctx.shadowBlur = 0;
+                    }
+                    
+                    // Restore the canvas state
+                    ctx.restore();
                 } else {
-                    // Body segments get progressively darker
-                    const alpha = 1 - (index / gameState.snake.length) * 0.6;
-                    ctx.fillStyle = gameState.easterEggActivated ? 
-                        `hsla(${(Date.now() / 20 + index * 10) % 360}, 100%, 50%, ${alpha})` : 
-                        `rgba(233, 69, 96, ${alpha})`;
+                    // Body segments remain the same
+                    if (index === 0) {
+                        // Fallback for head if sprite isn't loaded
+                        ctx.fillStyle = gameState.easterEggActivated ? 
+                            `hsl(${(Date.now() / 20) % 360}, 100%, 50%)` : '#e94560';
+                    } else {
+                        // Body segments get progressively darker
+                        const alpha = 1 - (index / gameState.snake.length) * 0.6;
+                        ctx.fillStyle = gameState.easterEggActivated ? 
+                            `hsla(${(Date.now() / 20 + index * 10) % 360}, 100%, 50%, ${alpha})` : 
+                            `rgba(233, 69, 96, ${alpha})`;
+                    }
+                    
+                    // Draw segment with glow effect
+                    ctx.shadowColor = gameState.easterEggActivated ? 
+                        `hsl(${(Date.now() / 20 + index * 10) % 360}, 100%, 50%)` : 
+                        'rgba(233, 69, 96, 0.8)';
+                    ctx.shadowBlur = 10;
+                    
+                    // Draw rounded rectangle for segment
+                    const radius = 4;
+                    const x = segment.x;
+                    const y = segment.y;
+                    const size = config.gridSize;
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(x + radius, y);
+                    ctx.arcTo(x + size, y, x + size, y + size, radius);
+                    ctx.arcTo(x + size, y + size, x, y + size, radius);
+                    ctx.arcTo(x, y + size, x, y, radius);
+                    ctx.arcTo(x, y, x + size, y, radius);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Reset shadow for other elements
+                    ctx.shadowBlur = 0;
                 }
-                
-                // Draw segment with glow effect
-                ctx.shadowColor = gameState.easterEggActivated ? 
-                    `hsl(${(Date.now() / 20 + index * 10) % 360}, 100%, 50%)` : 
-                    'rgba(233, 69, 96, 0.8)';
-                ctx.shadowBlur = 10;
-                
-                // Draw rounded rectangle for segment
-                const radius = 4;
-                const x = segment.x;
-                const y = segment.y;
-                const size = config.gridSize;
-                
-                ctx.beginPath();
-                ctx.moveTo(x + radius, y);
-                ctx.arcTo(x + size, y, x + size, y + size, radius);
-                ctx.arcTo(x + size, y + size, x, y + size, radius);
-                ctx.arcTo(x, y + size, x, y, radius);
-                ctx.arcTo(x, y, x + size, y, radius);
-                ctx.closePath();
-                ctx.fill();
-                
-                // Reset shadow for other elements
-                ctx.shadowBlur = 0;
             });
             
             // Draw food
@@ -866,6 +935,9 @@
 
         // Setup canvas initially
         setupCanvas();
+        
+        // Load player sprite
+        loadPlayerSprite();
     </script>
 </body>
 </html>
