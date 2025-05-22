@@ -9,8 +9,9 @@ https://www.youtube.com/watch?v=cOt79RWZ3yU&ab_channel=Vitas
 ### Features
 
 - Classic snake gameplay with modern visual effects
-- Power-ups with special abilities
+- Power-ups with special abilities 
 - Collectible items (coins, gems, keys) for bonus points
+- Sound effects and background music
 - Responsive design for any screen size
 - AI-generated backgrounds and platform assets
 - Multiple levels with increasing difficulty

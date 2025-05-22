@@ -34,6 +34,8 @@
         canvas {
             display: block;
             background: linear-gradient(45deg, #0f0f1a, #1a1a2e);
+            background-size: cover;
+            background-position: center;
         }
 
         .ui-container {
@@ -61,10 +63,36 @@
             color: #fff;
             text-align: center;
             z-index: 10;
+            transition: opacity 0.5s ease, transform 0.5s ease;
+            backdrop-filter: blur(5px);
+            border-radius: 8px;
         }
 
         .hidden {
             display: none;
+        }
+        
+        .game-logo {
+            margin-bottom: 15px;
+            animation: pulse 2s infinite ease-in-out;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .menu-btn {
+            background: linear-gradient(45deg, #16213e, #0f3460);
+            color: #e94560;
+            border: 2px solid #e94560;
+            transition: all 0.3s ease;
+        }
+        
+        .menu-btn:hover {
+            background: #e94560;
+            color: white;
         }
 
         h1 {
@@ -102,6 +130,75 @@
             transform: scale(1.05);
             box-shadow: 0 0 15px rgba(233, 69, 96, 0.8);
         }
+        
+        .pulse-btn {
+            animation: pulse-btn 1.5s infinite;
+        }
+        
+        @keyframes pulse-btn {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .highlight-score {
+            font-size: 1.5em;
+            color: #e94560;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(233, 69, 96, 0.7);
+        }
+        
+        .tagline {
+            color: #e94560;
+            font-style: italic;
+            margin-bottom: 20px;
+        }
+        
+        .instructions {
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(15, 15, 30, 0.6);
+            border-radius: 10px;
+            border-left: 4px solid #e94560;
+        }
+        
+        .controls-reminder {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(15, 15, 30, 0.6);
+            border-radius: 10px;
+            max-width: 80%;
+        }
+        
+        .controls-reminder h3 {
+            color: #e94560;
+            margin-bottom: 10px;
+        }
+        
+        .menu-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        
+        .game-over-title {
+            animation: fade-in 1s ease;
+        }
+        
+        @keyframes fade-in {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .score-display {
+            animation: pop-in 0.5s ease 0.3s both;
+        }
+        
+        @keyframes pop-in {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
 
         .controls {
             margin-top: 20px;
@@ -127,6 +224,18 @@
 
         .high-scores li {
             margin: 5px 0;
+        }
+        
+        .collectibles-summary {
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(10, 10, 20, 0.6);
+            border-radius: 10px;
+            display: inline-block;
+        }
+        
+        .collectibles-summary .collectible-icon {
+            margin: 0 3px 0 8px;
         }
 
         .power-up-indicator {
@@ -172,6 +281,39 @@
             z-index: 5;
         }
 
+        .collectibles-container {
+            width: 100%;
+            max-width: 600px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            padding: 10px 0;
+            margin-bottom: 10px;
+            color: #fff;
+            font-size: 18px;
+            text-shadow: 0 0 5px rgba(233, 69, 96, 0.7);
+        }
+
+        .collectible-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(10, 10, 20, 0.6);
+            padding: 5px 10px;
+            border-radius: 20px;
+            box-shadow: 0 0 10px rgba(233, 69, 96, 0.3);
+            transition: transform 0.2s ease;
+        }
+        
+        .collectible-item:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(233, 69, 96, 0.5);
+        }
+
+        .collectible-icon {
+            font-size: 1.2rem;
+        }
+
         @media (max-width: 600px) {
             .game-container {
                 width: 95vw;
@@ -179,7 +321,7 @@
             }
             
             h1 {
-                font-size: 2rem;
+                font-size: 1.8rem;
             }
             
             h2 {
@@ -189,13 +331,56 @@
             .ui-container {
                 font-size: 16px;
             }
+            
+            .instructions p,
+            .controls-reminder p {
+                font-size: 0.9rem;
+            }
+            
+            .tagline {
+                font-size: 1rem;
+            }
+            
+            .game-logo svg {
+                width: 60px;
+                height: 60px;
+            }
+            
+            .menu-options {
+                gap: 5px;
+            }
+            
+            button {
+                padding: 8px 16px;
+                font-size: 0.9rem;
+            }
+            
+            .high-scores {
+                max-width: 90%;
+            }
         }
     </style>
 </head>
 <body>
     <div class="ui-container">
         <div id="score">Score: 0</div>
+        <div id="lives">Lives: 3</div>
         <div id="high-score">High Score: 0</div>
+    </div>
+    
+    <div class="collectibles-container" id="collectiblesContainer">
+        <div class="collectible-item">
+            <span class="collectible-icon">🪙</span>
+            <span id="coinCount">0</span>
+        </div>
+        <div class="collectible-item">
+            <span class="collectible-icon">💎</span>
+            <span id="gemCount">0</span>
+        </div>
+        <div class="collectible-item">
+            <span class="collectible-icon">🔑</span>
+            <span id="keyCount">0</span>
+        </div>
     </div>
     
     <div class="game-container">
@@ -212,7 +397,8 @@
             <h1>Enhanced Snake Game</h1>
             <p>Use Arrow Keys or WASD to move</p>
             <p>Collect food to grow and earn points</p>
-            <p>Watch out for special power-ups!</p>
+            <p>Grab power-ups for special abilities!</p>
+            <p>Find coins, gems and keys for bonus points!</p>
             <button id="startButton">Start Game</button>
             <div class="controls">
                 <p>P: Pause Game | M: Toggle Sound</p>
@@ -222,8 +408,15 @@
         <div class="game-over hidden" id="gameOverScreen">
             <h2>Game Over</h2>
             <p>Your Score: <span id="finalScore">0</span></p>
+            <div class="collectibles-summary">
+                <p>Collectibles: 
+                    <span class="collectible-icon">🪙</span> <span id="finalCoins">0</span>
+                    <span class="collectible-icon">💎</span> <span id="finalGems">0</span>
+                    <span class="collectible-icon">🔑</span> <span id="finalKeys">0</span>
+                </p>
+            </div>
             <button id="restartButton">Play Again</button>
-            <button id="gameOverMainMenuButton">Main Menu</button>
+            <button id="gameOverMainMenuButton" class="menu-btn">Main Menu</button>
             
             <div class="high-scores">
                 <h3>High Scores</h3>
@@ -233,8 +426,16 @@
         
         <div class="pause-screen hidden" id="pauseScreen">
             <h2>Game Paused</h2>
-            <button id="resumeButton">Resume</button>
-            <button id="mainMenuButton">Main Menu</button>
+            <div class="menu-options">
+                <button id="resumeButton" class="pulse-btn">Resume Game</button>
+                <button id="mainMenuButton" class="menu-btn">Main Menu</button>
+            </div>
+            <div class="controls-reminder">
+                <h3>Controls</h3>
+                <p>Arrow Keys/WASD: Move Snake</p>
+                <p>P: Pause/Resume</p>
+                <p>M: Toggle Sound</p>
+            </div>
         </div>
     </div>
 
@@ -250,7 +451,10 @@
             responsive: true,
             soundEnabled: true,
             musicVolume: 0.3,
-            effectsVolume: 0.5
+            effectsVolume: 0.5,
+            gravity: 0.5,               // Gravity strength
+            groundLevel: 380,           // Y position of the ground (slightly above canvas height)
+            platformHeight: 10          // Height of platforms
         };
 
         // Game State
@@ -261,21 +465,34 @@
             food: { x: 0, y: 0, type: 'regular' },
             score: 0,
             highScore: 0,
+            lives: 3, // Initial lives count
             gameOver: false,
             paused: false,
             lastRenderTime: 0,
             gameSpeed: config.initialSpeed,
             powerUp: null,
+            collectible: null,
+            collectedItems: {
+                coins: 0,
+                gems: 0,
+                keys: 0
+            },
             particles: [],
             foodTypes: [
                 { type: 'regular', color: '#e94560', points: 1, probability: 0.7, size: 1 },
                 { type: 'bonus', color: '#ffbd69', points: 3, probability: 0.2, size: 1.2 },
                 { type: 'special', color: '#00f5d4', points: 5, probability: 0.1, size: 1.5 }
             ],
+
             powerUps: [
                 { type: 'speed', color: '#ff2e63', duration: 5000, icon: '⚡' },
                 { type: 'immunity', color: '#00b8a9', duration: 8000, icon: '🛡️' },
                 { type: 'multiplier', color: '#8a2be2', duration: 10000, icon: '✖️' }
+            ],
+            collectibleTypes: [
+                { type: 'coin', color: '#ffd700', points: 10, probability: 0.6, size: 0.8, icon: '🪙' },
+                { type: 'gem', color: '#00ffff', points: 25, probability: 0.3, size: 0.9, icon: '💎' },
+                { type: 'key', color: '#ffb145', points: 50, probability: 0.1, size: 1.0, icon: '🔑' }
             ],
             activePowerUp: null,
             powerUpTimer: null,
@@ -288,6 +505,7 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const scoreElement = document.getElementById('score');
+        const livesElement = document.getElementById('lives');
         const highScoreElement = document.getElementById('high-score');
         const finalScoreElement = document.getElementById('finalScore');
         const startScreen = document.getElementById('startScreen');
@@ -301,6 +519,12 @@
         const powerUpIcon = document.getElementById('powerUpIcon');
         const powerUpText = document.getElementById('powerUpText');
         const soundToggle = document.getElementById('soundToggle');
+        const coinCountElement = document.getElementById('coinCount');
+        const gemCountElement = document.getElementById('gemCount');
+        const keyCountElement = document.getElementById('keyCount');
+        const finalCoinsElement = document.getElementById('finalCoins');
+        const finalGemsElement = document.getElementById('finalGems');
+        const finalKeysElement = document.getElementById('finalKeys');
         const mainMenuButton = document.getElementById('mainMenuButton');
         const gameOverMainMenuButton = document.getElementById('gameOverMainMenuButton');
 
@@ -522,7 +746,21 @@
             gameState.gameSpeed = config.initialSpeed;
             gameState.particles = [];
             gameState.activePowerUp = null;
+            
+            gameState.collectible = null;
+            gameState.collectedItems = {
+                coins: 0,
+                gems: 0,
+                keys: 0
+            };
+            
+            // Update collectibles display
+            coinCountElement.textContent = '0';
+            gemCountElement.textContent = '0';
+            keyCountElement.textContent = '0';
+            
             gameState.easterEggActivated = false;
+            gameState.lives = 3; // Reset lives to initial amount
             
             if (gameState.powerUpTimer) {
                 clearTimeout(gameState.powerUpTimer);
@@ -541,6 +779,9 @@
             
             // Update score display
             updateScore();
+            
+            // Update lives display
+            updateLives();
             
             // Initialize audio if needed and play background music
             if (config.soundEnabled && !soundManager.initialized) {
@@ -585,6 +826,40 @@
             if (!gameState.activePowerUp && Math.random() < 0.1) {
                 generatePowerUp();
             }
+            
+            // Occasionally spawn a collectible (15% chance when no active collectible)
+            if (!gameState.collectible && Math.random() < 0.15) {
+                generateCollectible();
+            }
+        }
+
+        // Generate collectible at random position
+        function generateCollectible() {
+            // Select random collectible type based on probability
+            let collectibleType;
+            const rand = Math.random();
+            let cumulativeProbability = 0;
+            
+            for (const type of gameState.collectibleTypes) {
+                cumulativeProbability += type.probability;
+                if (rand <= cumulativeProbability) {
+                    collectibleType = type;
+                    break;
+                }
+            }
+            
+            // Generate random position that doesn't overlap with snake, food, or power-up
+            let position;
+            do {
+                position = {
+                    x: Math.floor(Math.random() * (canvas.width / config.gridSize)) * config.gridSize,
+                    y: Math.floor(Math.random() * (canvas.height / config.gridSize)) * config.gridSize
+                };
+            } while (isPositionOccupied(position) || 
+                    (position.x === gameState.food.x && position.y === gameState.food.y) ||
+                    (gameState.powerUp && position.x === gameState.powerUp.x && position.y === gameState.powerUp.y));
+            
+            gameState.collectible = { ...position, ...collectibleType };
         }
 
         // Generate power-up at random position
@@ -682,14 +957,14 @@
                 gameState.score += points;
                 updateScore();
                 
-                // Play food collection sound
-                if (config.soundEnabled) {
-                    soundManager.playFoodSound(gameState.food.type);
-                }
-                
                 // Create particles
                 createParticles(gameState.food.x + config.gridSize/2, gameState.food.y + config.gridSize/2, 
                                 foodTypeDetails.color, 10);
+                
+                // Play food sound
+                if (config.soundEnabled) {
+                    soundManager.playFoodSound(gameState.food.type);
+                }
                 
                 // Generate new food
                 generateFood();
@@ -703,6 +978,11 @@
             else if (gameState.powerUp && head.x === gameState.powerUp.x && head.y === gameState.powerUp.y) {
                 activatePowerUp(gameState.powerUp);
                 gameState.powerUp = null;
+            }
+            // Check for collectible collision
+            else if (gameState.collectible && head.x === gameState.collectible.x && head.y === gameState.collectible.y) {
+                collectItem(gameState.collectible);
+                gameState.collectible = null;
             }
             else {
                 // Remove tail if no food was eaten
@@ -761,6 +1041,42 @@
             powerUpIndicator.classList.remove('active');
         }
 
+        // Collect item
+        function collectItem(collectible) {
+            // Update collected items count
+            switch(collectible.type) {
+                case 'coin':
+                    gameState.collectedItems.coins++;
+                    coinCountElement.textContent = gameState.collectedItems.coins;
+                    break;
+                case 'gem':
+                    gameState.collectedItems.gems++;
+                    gemCountElement.textContent = gameState.collectedItems.gems;
+                    break;
+                case 'key':
+                    gameState.collectedItems.keys++;
+                    keyCountElement.textContent = gameState.collectedItems.keys;
+                    break;
+            }
+            
+            // Add points
+            gameState.score += collectible.points;
+            updateScore();
+            
+            // Create particles
+            createParticles(
+                collectible.x + config.gridSize/2, 
+                collectible.y + config.gridSize/2, 
+                collectible.color, 
+                15
+            );
+            
+            // Play collection sound
+            if (config.soundEnabled) {
+                soundManager.playTone(440 + Math.random() * 200, 0.2, 'sine', 0.6);
+            }
+        }
+
         // Create particles
         function createParticles(x, y, color, count) {
             for (let i = 0; i < count; i++) {
@@ -780,6 +1096,30 @@
             }
         }
 
+        // Reset snake position after losing a life
+        function resetSnakePosition() {
+            // Create new snake at center
+            gameState.snake = [
+                { x: Math.floor(canvas.width / config.gridSize / 2) * config.gridSize, 
+                  y: Math.floor(canvas.height / config.gridSize / 2) * config.gridSize }
+            ];
+            
+            // Reset direction
+            gameState.direction = 'right';
+            gameState.nextDirection = 'right';
+            
+            // Clear any active power-ups
+            if (gameState.powerUpTimer) {
+                clearTimeout(gameState.powerUpTimer);
+                gameState.powerUpTimer = null;
+            }
+            gameState.activePowerUp = null;
+            powerUpIndicator.classList.remove('active');
+            
+            // Generate new food
+            generateFood();
+        }
+
         // Update particles
         function updateParticles() {
             for (let i = gameState.particles.length - 1; i >= 0; i--) {
@@ -797,34 +1137,68 @@
 
         // Handle game over
         function handleGameOver() {
-            gameState.gameOver = true;
+            // Decrease lives
+            gameState.lives--;
+            updateLives();
             
-            // Play game over sound
+            // Create explosion particles at the snake's head
+            createParticles(
+                gameState.snake[0].x + config.gridSize/2,
+                gameState.snake[0].y + config.gridSize/2,
+                '#ff4d4d',
+                30
+            );
+            
+            // Play sound effect
             if (config.soundEnabled) {
-                soundManager.stopBgMusic();
-                soundManager.playGameOverSound();
+                soundManager.playTone(196.00, 0.3, 'sawtooth', 0.6); // G3 crash sound
             }
             
-            // Update high score if needed
-            if (gameState.score > gameState.highScore) {
-                gameState.highScore = gameState.score;
-                localStorage.setItem('snakeHighScore', gameState.highScore);
-                highScoreElement.textContent = `High Score: ${gameState.highScore}`;
+            // Check if player has remaining lives
+            if (gameState.lives <= 0) {
+                // Game over - no lives left
+                gameState.gameOver = true;
+                
+                // Stop music and play game over sound
+                if (config.soundEnabled) {
+                    soundManager.stopBgMusic();
+                    soundManager.playGameOverSound();
+                }
+                
+                // Update high score if needed
+                if (gameState.score > gameState.highScore) {
+                    gameState.highScore = gameState.score;
+                    localStorage.setItem('snakeHighScore', gameState.highScore);
+                    highScoreElement.textContent = `High Score: ${gameState.highScore}`;
+                }
+                
+                // Update final score
+                finalScoreElement.textContent = gameState.score;
+                
+                // Update collected items
+                finalCoinsElement.textContent = gameState.collectedItems.coins;
+                finalGemsElement.textContent = gameState.collectedItems.gems;
+                finalKeysElement.textContent = gameState.collectedItems.keys;
+                
+                // Update high scores list
+                updateHighScoresList();
+                
+                // Show game over screen
+                gameOverScreen.classList.remove('hidden');
+            } else {
+                // Player still has lives - reset snake and continue
+                resetSnakePosition();
             }
-            
-            // Update final score
-            finalScoreElement.textContent = gameState.score;
-            
-            // Update high scores list
-            updateHighScoresList();
-            
-            // Show game over screen
-            gameOverScreen.classList.remove('hidden');
         }
 
         // Update score display
         function updateScore() {
             scoreElement.textContent = `Score: ${gameState.score}`;
+        }
+
+        // Update lives display
+        function updateLives() {
+            livesElement.textContent = `Lives: ${gameState.lives}`;
         }
 
         // Update high scores list
@@ -851,6 +1225,7 @@
             });
         }
 
+
         // Draw game elements
         function draw() {
             // Clear canvas
@@ -874,6 +1249,7 @@
                 ctx.shadowColor = gameState.easterEggActivated ? 
                     `hsl(${(Date.now() / 20 + index * 10) % 360}, 100%, 50%)` : 
                     'rgba(233, 69, 96, 0.8)';
+
                 ctx.shadowBlur = 10;
                 
                 // Draw rounded rectangle for segment
@@ -956,6 +1332,68 @@
                 
                 ctx.closePath();
                 ctx.fill();
+                
+                ctx.shadowBlur = 0;
+            }
+            
+            // Draw collectible if active
+            if (gameState.collectible) {
+                ctx.fillStyle = gameState.collectible.color;
+                
+                // Pulsating effect
+                const pulseFactor = 1 + 0.2 * Math.sin(Date.now() / 200);
+                const size = config.gridSize * gameState.collectible.size * pulseFactor;
+                
+                // Draw with glow
+                ctx.shadowColor = gameState.collectible.color;
+                ctx.shadowBlur = 15;
+                
+                const centerX = gameState.collectible.x + config.gridSize / 2;
+                const centerY = gameState.collectible.y + config.gridSize / 2;
+                
+                // Draw collectible based on type
+                switch(gameState.collectible.type) {
+                    case 'coin':
+                        // Draw coin (circle)
+                        ctx.beginPath();
+                        ctx.arc(centerX, centerY, size / 2, 0, Math.PI * 2);
+                        ctx.fill();
+                        
+                        // Add details to make it look like a coin
+                        ctx.strokeStyle = '#ffaa00';
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.arc(centerX, centerY, size / 3, 0, Math.PI * 2);
+                        ctx.stroke();
+                        break;
+                        
+                    case 'gem':
+                        // Draw gem (diamond shape)
+                        ctx.beginPath();
+                        ctx.moveTo(centerX, centerY - size / 2); // Top
+                        ctx.lineTo(centerX + size / 2, centerY); // Right
+                        ctx.lineTo(centerX, centerY + size / 2); // Bottom
+                        ctx.lineTo(centerX - size / 2, centerY); // Left
+                        ctx.closePath();
+                        ctx.fill();
+                        break;
+                        
+                    case 'key':
+                        // Draw key
+                        ctx.beginPath();
+                        
+                        // Key head (circle)
+                        ctx.arc(centerX - size / 4, centerY, size / 4, 0, Math.PI * 2);
+                        
+                        // Key stem
+                        ctx.rect(centerX - size / 4, centerY - size / 8, size / 2, size / 4);
+                        
+                        // Key teeth
+                        ctx.rect(centerX + size / 4 - size / 8, centerY - size / 4, size / 4, size / 2);
+                        
+                        ctx.fill();
+                        break;
+                }
                 
                 ctx.shadowBlur = 0;
             }
@@ -1069,16 +1507,19 @@
             
             if (gameState.paused) {
                 showScreen(pauseScreen);
+                
                 // Pause background music
                 if (config.soundEnabled) {
                     soundManager.stopBgMusic();
                 }
             } else {
                 pauseScreen.classList.add('hidden');
+                
                 // Resume background music
                 if (config.soundEnabled) {
                     soundManager.playBgMusic();
                 }
+                
                 window.requestAnimationFrame(gameLoop);
             }
             
@@ -1141,33 +1582,33 @@
             gameState.gameOver = true;
             gameState.paused = false;
             
+            // Stop background music
+            if (config.soundEnabled) {
+                soundManager.stopBgMusic();
+            }
+            
             // Show start screen with animation
             showScreen(startScreen);
+            
+            // Play button sound
+            if (config.soundEnabled) {
+                soundManager.playButtonSound();
+            }
         }
 
-        // Load player sprite for snake head
+        // Load player sprite for snake head (placeholder for now)
         function loadPlayerSprite() {
             // This is a placeholder implementation
             // In the actual implementation, this would load the sprite image
             gameState.playerSprite = new Image();
             gameState.playerSprite.src = ''; // Empty for now as a placeholder
-            
-            // Add a load event just to be safe
-            gameState.playerSprite.onload = function() {
-                console.log("Player sprite loaded");
-            };
-            
-            // Error handling
-            gameState.playerSprite.onerror = function() {
-                console.log("Could not load player sprite");
-            };
         }
 
         // Setup canvas initially
         setupCanvas();
         
-        // Load player sprite
-        loadPlayerSprite();
+        // Initialize platform images object
+        const platformImages = {};
 
         // Add listener to initialize audio on first user interaction
         // This is required by browsers to allow audio playback
