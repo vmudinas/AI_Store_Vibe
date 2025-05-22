@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+    HTML5 Canvas Game Template
+    
+    This template provides a basic structure for HTML5 canvas-based games with:
+    - Responsive canvas that adapts to window size
+    - Optional fixed-size canvas configuration
+    - Basic animation loop
+    - Window resize event handling
+-->
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML5 Game Template</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f0f0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .game-container {
+            position: relative;
+            margin: 20px auto;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+            background-color: #fff;
+        }
+
+        .ui-container {
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div class="ui-container">
+        <div id="gameInfo">Game Template</div>
+    </div>
+    
+    <div class="game-container">
+        <canvas id="gameCanvas"></canvas>
+    </div>
+
+    <script>
+        // Game Configuration
+        const config = {
+            canvasWidth: 800,      // Default canvas width in pixels (used for fixed size or max size for responsive)
+            canvasHeight: 600,     // Default canvas height in pixels
+            responsive: true,      // Set to false for fixed size
+            backgroundColor: '#ffffff',
+            frameRate: 60          // Target frame rate (for reference, not enforced)
+        };
+
+        // Get DOM Elements
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Initialize canvas size
+        function setupCanvas() {
+            if (config.responsive) {
+                // Responsive sizing based on window dimensions
+                // Calculate dimensions to fit the window while maintaining proportions
+                const containerWidth = Math.min(window.innerWidth * 0.95, config.canvasWidth);
+                const containerHeight = Math.min(window.innerHeight * 0.7, config.canvasHeight);
+                
+                canvas.width = containerWidth;
+                canvas.height = containerHeight;
+            } else {
+                // Fixed sizing based on configuration
+                canvas.width = config.canvasWidth;
+                canvas.height = config.canvasHeight;
+            }
+            
+            // Optional: Additional setup after canvas resize (e.g., redraw if not in animation loop)
+            // draw();
+        }
+
+        // Sample draw function to demonstrate canvas functionality
+        function draw() {
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Set background color
+            ctx.fillStyle = config.backgroundColor;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw a simple animation
+            const time = Date.now() * 0.001; // time in seconds
+            
+            // Draw moving rectangle
+            ctx.fillStyle = '#3498db';
+            const x = (Math.sin(time) * 0.5 + 0.5) * (canvas.width - 100);
+            ctx.fillRect(x, canvas.height / 2 - 50, 100, 100);
+            
+            // Draw pulsating circle
+            ctx.fillStyle = '#e74c3c';
+            const radius = (Math.sin(time * 2) * 0.2 + 0.8) * 50;
+            ctx.beginPath();
+            ctx.arc(canvas.width / 2, canvas.height / 2, radius, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Draw text
+            ctx.fillStyle = '#2c3e50';
+            ctx.font = '24px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('HTML5 Canvas Template', canvas.width / 2, 50);
+        }
+
+        // Game loop
+        function gameLoop() {
+            // Draw current frame
+            draw();
+            
+            // Request next frame
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Initialize the game
+        function init() {
+            // Set up canvas
+            setupCanvas();
+            
+            // Start game loop
+            gameLoop();
+        }
+
+        // Event listeners
+        window.addEventListener('resize', setupCanvas);
+        
+        // Start the game when page is loaded
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

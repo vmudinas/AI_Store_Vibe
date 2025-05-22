@@ -61,10 +61,36 @@
             color: #fff;
             text-align: center;
             z-index: 10;
+            transition: opacity 0.5s ease, transform 0.5s ease;
+            backdrop-filter: blur(5px);
+            border-radius: 8px;
         }
 
         .hidden {
             display: none;
+        }
+        
+        .game-logo {
+            margin-bottom: 15px;
+            animation: pulse 2s infinite ease-in-out;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .menu-btn {
+            background: linear-gradient(45deg, #16213e, #0f3460);
+            color: #e94560;
+            border: 2px solid #e94560;
+            transition: all 0.3s ease;
+        }
+        
+        .menu-btn:hover {
+            background: #e94560;
+            color: white;
         }
 
         h1 {
@@ -101,6 +127,75 @@
         button:hover {
             transform: scale(1.05);
             box-shadow: 0 0 15px rgba(233, 69, 96, 0.8);
+        }
+        
+        .pulse-btn {
+            animation: pulse-btn 1.5s infinite;
+        }
+        
+        @keyframes pulse-btn {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .highlight-score {
+            font-size: 1.5em;
+            color: #e94560;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(233, 69, 96, 0.7);
+        }
+        
+        .tagline {
+            color: #e94560;
+            font-style: italic;
+            margin-bottom: 20px;
+        }
+        
+        .instructions {
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(15, 15, 30, 0.6);
+            border-radius: 10px;
+            border-left: 4px solid #e94560;
+        }
+        
+        .controls-reminder {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(15, 15, 30, 0.6);
+            border-radius: 10px;
+            max-width: 80%;
+        }
+        
+        .controls-reminder h3 {
+            color: #e94560;
+            margin-bottom: 10px;
+        }
+        
+        .menu-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        
+        .game-over-title {
+            animation: fade-in 1s ease;
+        }
+        
+        @keyframes fade-in {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .score-display {
+            animation: pop-in 0.5s ease 0.3s both;
+        }
+        
+        @keyframes pop-in {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
         }
 
         .controls {
@@ -179,7 +274,7 @@
             }
             
             h1 {
-                font-size: 2rem;
+                font-size: 1.8rem;
             }
             
             h2 {
@@ -188,6 +283,33 @@
             
             .ui-container {
                 font-size: 16px;
+            }
+            
+            .instructions p,
+            .controls-reminder p {
+                font-size: 0.9rem;
+            }
+            
+            .tagline {
+                font-size: 1rem;
+            }
+            
+            .game-logo svg {
+                width: 60px;
+                height: 60px;
+            }
+            
+            .menu-options {
+                gap: 5px;
+            }
+            
+            button {
+                padding: 8px 16px;
+                font-size: 0.9rem;
+            }
+            
+            .high-scores {
+                max-width: 90%;
             }
         }
     </style>
@@ -209,22 +331,34 @@
         <button class="sound-toggle" id="soundToggle">🔊</button>
         
         <div class="start-screen" id="startScreen">
+        <div class="game-logo">
+                <svg width="80" height="80" viewBox="0 0 80 80">
+                    <path d="M30,20 L50,20 L50,30 L60,30 L60,50 L40,50 L40,60 L20,60 L20,40 L30,40 Z" 
+                          fill="#e94560" stroke="#fff" stroke-width="2"></path>
+                </svg>
+            </div>
             <h1>Enhanced Snake Game</h1>
-            <p>Use Arrow Keys or WASD to move</p>
-            <p>Press UP while on a platform to jump!</p>
-            <p>Collect food to grow and earn points</p>
-            <p>Watch out for special power-ups!</p>
-            <p>The snake head glows green when you can jump</p>
-            <button id="startButton">Start Game</button>
+            <p class="tagline">Navigate, Eat, Grow, Repeat!</p>
+            <div class="instructions">
+                <p>Use Arrow Keys or WASD to move</p>
+                <p>Collect food to grow and earn points</p>
+                <p>Watch out for special power-ups!</p>
+            </div>
+            <button id="startButton" class="pulse-btn">Start Game</button>
             <div class="controls">
                 <p>P: Pause Game | M: Toggle Sound</p>
             </div>
         </div>
         
         <div class="game-over hidden" id="gameOverScreen">
-            <h2>Game Over</h2>
-            <p>Your Score: <span id="finalScore">0</span></p>
-            <button id="restartButton">Play Again</button>
+            <h2 class="game-over-title">Game Over</h2>
+            <div class="score-display">
+                <p>Your Score: <span id="finalScore" class="highlight-score">0</span></p>
+            </div>
+            <div class="menu-options">
+                <button id="restartButton" class="pulse-btn">Play Again</button>
+                <button id="gameOverMainMenuButton" class="menu-btn">Main Menu</button>
+            </div>
             
             <div class="high-scores">
                 <h3>High Scores</h3>
@@ -234,7 +368,16 @@
         
         <div class="pause-screen hidden" id="pauseScreen">
             <h2>Game Paused</h2>
-            <button id="resumeButton">Resume</button>
+            <div class="menu-options">
+                <button id="resumeButton" class="pulse-btn">Resume Game</button>
+                <button id="mainMenuButton" class="menu-btn">Main Menu</button>
+            </div>
+            <div class="controls-reminder">
+                <h3>Controls</h3>
+                <p>Arrow Keys/WASD: Move Snake</p>
+                <p>P: Pause/Resume</p>
+                <p>M: Toggle Sound</p>
+            </div>
         </div>
     </div>
 
@@ -268,6 +411,9 @@
             gameSpeed: config.initialSpeed,
             powerUp: null,
             particles: [],
+
+            playerSprite: null, // Store player sprite image
+            spriteLoaded: false, // Flag to track if sprite is loaded
             foodTypes: [
                 { type: 'regular', color: '#e94560', points: 1, probability: 0.7, size: 1 },
                 { type: 'bonus', color: '#ffbd69', points: 3, probability: 0.2, size: 1.2 },
@@ -286,6 +432,7 @@
             platforms: [],              // Array to store platform objects
             verticalVelocity: 0,        // Current vertical velocity for gravity
             isGrounded: false           // Flag to track if the snake is on ground/platform
+            easterEggActivated: false
         };
 
         // DOM Elements
@@ -300,6 +447,8 @@
         const startButton = document.getElementById('startButton');
         const restartButton = document.getElementById('restartButton');
         const resumeButton = document.getElementById('resumeButton');
+        const mainMenuButton = document.getElementById('mainMenuButton');
+        const gameOverMainMenuButton = document.getElementById('gameOverMainMenuButton');
         const highScoresList = document.getElementById('highScoresList');
         const powerUpIndicator = document.getElementById('powerUpIndicator');
         const powerUpIcon = document.getElementById('powerUpIcon');
@@ -341,6 +490,21 @@
             gameState.nextDirection = 'right';
             gameState.score = 0;
             gameState.gameOver = false;
+            // Load the player sprite if not already loaded
+            if (!gameState.spriteLoaded) {
+                loadPlayerSprite();
+            }
+            
+            // Create initial snake
+            gameState.snake = [
+                { x: Math.floor(canvas.width / config.gridSize / 2) * config.gridSize, 
+                  y: Math.floor(canvas.height / config.gridSize / 2) * config.gridSize }
+            ];
+            
+            gameState.direction = 'right';
+            gameState.nextDirection = 'right';
+            gameState.score = 0;
+            gameState.gameOver = false;
             gameState.gameSpeed = config.initialSpeed;
             gameState.particles = [];
             gameState.activePowerUp = null;
@@ -350,6 +514,7 @@
             
             // Generate platforms
             generatePlatforms();
+
             
             if (gameState.powerUpTimer) {
                 clearTimeout(gameState.powerUpTimer);
@@ -371,6 +536,32 @@
             
             // Start game loop
             window.requestAnimationFrame(gameLoop);
+            }
+            
+            // Load high score from localStorage
+            const savedHighScore = localStorage.getItem('snakeHighScore');
+            if (savedHighScore) {
+                gameState.highScore = parseInt(savedHighScore);
+                highScoreElement.textContent = `High Score: ${gameState.highScore}`;
+            }
+            
+            // Generate initial food
+            generateFood();
+            
+            // Update score display
+            updateScore();
+            
+            // Start game loop
+            window.requestAnimationFrame(gameLoop);
+        }
+
+        // Load player sprite
+        function loadPlayerSprite() {
+            gameState.playerSprite = new Image();
+            gameState.playerSprite.onload = function() {
+                gameState.spriteLoaded = true;
+            };
+            gameState.playerSprite.src = 'assets/snake_head_sprite.png';
         }
 
         // Generate food at random position
@@ -756,8 +947,8 @@
             // Update high scores list
             updateHighScoresList();
             
-            // Show game over screen
-            gameOverScreen.classList.remove('hidden');
+            // Show game over screen with animation
+            showScreen(gameOverScreen);
         }
 
         // Update score display
@@ -843,6 +1034,100 @@
                 
                 // Reset shadow for other elements
                 ctx.shadowBlur = 0;
+        function draw() {
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw snake
+            gameState.snake.forEach((segment, index) => {
+                // Head has different style (use sprite for head)
+                if (index === 0 && gameState.spriteLoaded) {
+                    // Save the current canvas state
+                    ctx.save();
+                    
+                    // Translate to the center of the head segment for rotation
+                    const centerX = segment.x + config.gridSize / 2;
+                    const centerY = segment.y + config.gridSize / 2;
+                    ctx.translate(centerX, centerY);
+                    
+                    // Rotate based on direction
+                    switch(gameState.direction) {
+                        case 'up':
+                            ctx.rotate(-Math.PI/2); // 90 degrees counter-clockwise
+                            break;
+                        case 'down':
+                            ctx.rotate(Math.PI/2); // 90 degrees clockwise
+                            break;
+                        case 'left':
+                            ctx.rotate(Math.PI); // 180 degrees
+                            break;
+                        case 'right':
+                            // No rotation needed as this is the default
+                            break;
+                    }
+                    
+                    // Translate back for drawing
+                    ctx.translate(-centerX, -centerY);
+                    
+                    // Apply color tint for easter egg if active
+                    if (gameState.easterEggActivated) {
+                        // Create a colored rectangle for tinting
+                        ctx.fillStyle = `hsl(${(Date.now() / 20) % 360}, 100%, 50%)`;
+                        ctx.globalAlpha = 0.7;
+                        ctx.fillRect(segment.x, segment.y, config.gridSize, config.gridSize);
+                        
+                        // Draw the sprite with composition
+                        ctx.globalCompositeOperation = "lighter";
+                        ctx.globalAlpha = 1.0;
+                        ctx.drawImage(gameState.playerSprite, segment.x, segment.y, config.gridSize, config.gridSize);
+                    } else {
+                        // Draw the sprite normally with glow effect
+                        ctx.shadowColor = 'rgba(233, 69, 96, 0.8)';
+                        ctx.shadowBlur = 10;
+                        ctx.drawImage(gameState.playerSprite, segment.x, segment.y, config.gridSize, config.gridSize);
+                        ctx.shadowBlur = 0;
+                    }
+                    
+                    // Restore the canvas state
+                    ctx.restore();
+                } else {
+                    // Body segments remain the same
+                    if (index === 0) {
+                        // Fallback for head if sprite isn't loaded
+                        ctx.fillStyle = gameState.easterEggActivated ? 
+                            `hsl(${(Date.now() / 20) % 360}, 100%, 50%)` : '#e94560';
+                    } else {
+                        // Body segments get progressively darker
+                        const alpha = 1 - (index / gameState.snake.length) * 0.6;
+                        ctx.fillStyle = gameState.easterEggActivated ? 
+                            `hsla(${(Date.now() / 20 + index * 10) % 360}, 100%, 50%, ${alpha})` : 
+                            `rgba(233, 69, 96, ${alpha})`;
+                    }
+                    
+                    // Draw segment with glow effect
+                    ctx.shadowColor = gameState.easterEggActivated ? 
+                        `hsl(${(Date.now() / 20 + index * 10) % 360}, 100%, 50%)` : 
+                        'rgba(233, 69, 96, 0.8)';
+                    ctx.shadowBlur = 10;
+                    
+                    // Draw rounded rectangle for segment
+                    const radius = 4;
+                    const x = segment.x;
+                    const y = segment.y;
+                    const size = config.gridSize;
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(x + radius, y);
+                    ctx.arcTo(x + size, y, x + size, y + size, radius);
+                    ctx.arcTo(x + size, y + size, x, y + size, radius);
+                    ctx.arcTo(x, y + size, x, y, radius);
+                    ctx.arcTo(x, y, x + size, y, radius);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Reset shadow for other elements
+                    ctx.shadowBlur = 0;
+                }
             });
             
             // Draw food
@@ -998,6 +1283,19 @@
             }
         }
 
+        // Function to show a screen with animation
+        function showScreen(screen) {
+            // First hide all screens
+            startScreen.classList.add('hidden');
+            gameOverScreen.classList.add('hidden');
+            pauseScreen.classList.add('hidden');
+            
+            // Then show the requested screen with a small delay for better transition
+            setTimeout(() => {
+                screen.classList.remove('hidden');
+            }, 50);
+        }
+        
         // Toggle pause state
         function togglePause() {
             if (gameState.gameOver) return;
@@ -1005,7 +1303,7 @@
             gameState.paused = !gameState.paused;
             
             if (gameState.paused) {
-                pauseScreen.classList.remove('hidden');
+                showScreen(pauseScreen);
             } else {
                 pauseScreen.classList.add('hidden');
                 window.requestAnimationFrame(gameLoop);
@@ -1031,9 +1329,26 @@
         });
         resumeButton.addEventListener('click', togglePause);
         soundToggle.addEventListener('click', toggleSound);
+        
+        // Main menu buttons
+        mainMenuButton.addEventListener('click', returnToMainMenu);
+        gameOverMainMenuButton.addEventListener('click', returnToMainMenu);
+        
+        // Function to return to main menu
+        function returnToMainMenu() {
+            // Reset game state
+            gameState.gameOver = true;
+            gameState.paused = false;
+            
+            // Show start screen with animation
+            showScreen(startScreen);
+        }
 
         // Setup canvas initially
         setupCanvas();
+        
+        // Load player sprite
+        loadPlayerSprite();
     </script>
 </body>
 </html>
