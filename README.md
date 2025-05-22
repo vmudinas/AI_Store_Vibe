@@ -8,6 +8,7 @@ https://www.youtube.com/watch?v=cOt79RWZ3yU&ab_channel=Vitas
 
 ### Features
 - Classic snake gameplay with modern visuals
+
 - Power-ups and special food types
 - AI-generated backgrounds and platform assets
 - Multiple levels with increasing difficulty
