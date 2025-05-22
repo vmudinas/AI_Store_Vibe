@@ -274,7 +274,7 @@
             }
             
             h1 {
-                font-size: 2rem;
+                font-size: 1.8rem;
             }
             
             h2 {
@@ -283,6 +283,33 @@
             
             .ui-container {
                 font-size: 16px;
+            }
+            
+            .instructions p,
+            .controls-reminder p {
+                font-size: 0.9rem;
+            }
+            
+            .tagline {
+                font-size: 1rem;
+            }
+            
+            .game-logo svg {
+                width: 60px;
+                height: 60px;
+            }
+            
+            .menu-options {
+                gap: 5px;
+            }
+            
+            button {
+                padding: 8px 16px;
+                font-size: 0.9rem;
+            }
+            
+            .high-scores {
+                max-width: 90%;
             }
         }
     </style>
@@ -720,8 +747,8 @@
             // Update high scores list
             updateHighScoresList();
             
-            // Show game over screen
-            gameOverScreen.classList.remove('hidden');
+            // Show game over screen with animation
+            showScreen(gameOverScreen);
         }
 
         // Update score display
@@ -950,6 +977,19 @@
             }
         }
 
+        // Function to show a screen with animation
+        function showScreen(screen) {
+            // First hide all screens
+            startScreen.classList.add('hidden');
+            gameOverScreen.classList.add('hidden');
+            pauseScreen.classList.add('hidden');
+            
+            // Then show the requested screen with a small delay for better transition
+            setTimeout(() => {
+                screen.classList.remove('hidden');
+            }, 50);
+        }
+        
         // Toggle pause state
         function togglePause() {
             if (gameState.gameOver) return;
@@ -957,7 +997,7 @@
             gameState.paused = !gameState.paused;
             
             if (gameState.paused) {
-                pauseScreen.classList.remove('hidden');
+                showScreen(pauseScreen);
             } else {
                 pauseScreen.classList.add('hidden');
                 window.requestAnimationFrame(gameLoop);
@@ -990,14 +1030,12 @@
         
         // Function to return to main menu
         function returnToMainMenu() {
-            // Hide all screens except start screen
-            gameOverScreen.classList.add('hidden');
-            pauseScreen.classList.add('hidden');
-            startScreen.classList.remove('hidden');
-            
             // Reset game state
             gameState.gameOver = true;
             gameState.paused = false;
+            
+            // Show start screen with animation
+            showScreen(startScreen);
         }
 
         // Setup canvas initially
