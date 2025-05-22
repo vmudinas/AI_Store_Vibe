@@ -246,7 +246,10 @@
             speedIncrease: 0.5,
             maxSpeed: 50,
             responsive: true,
-            soundEnabled: true
+            soundEnabled: true,
+            gravity: 0.5,               // Gravity strength
+            groundLevel: 380,           // Y position of the ground (slightly above canvas height)
+            platformHeight: 10          // Height of platforms
         };
 
         // Game State
@@ -277,7 +280,10 @@
             powerUpTimer: null,
             konami: [38, 38, 40, 40, 37, 39, 37, 39, 66, 65], // Up Up Down Down Left Right Left Right B A
             konamiIndex: 0,
-            easterEggActivated: false
+            easterEggActivated: false,
+            platforms: [],              // Array to store platform objects
+            verticalVelocity: 0,        // Current vertical velocity for gravity
+            isGrounded: false           // Flag to track if the snake is on ground/platform
         };
 
         // DOM Elements
@@ -330,6 +336,11 @@
             gameState.particles = [];
             gameState.activePowerUp = null;
             gameState.easterEggActivated = false;
+            gameState.verticalVelocity = 0;
+            gameState.isGrounded = false;
+            
+            // Generate platforms
+            generatePlatforms();
             
             if (gameState.powerUpTimer) {
                 clearTimeout(gameState.powerUpTimer);
@@ -403,11 +414,78 @@
             gameState.powerUp = { ...position, ...powerUpType };
         }
 
+        // Generate platforms in the game
+        function generatePlatforms() {
+            // Clear existing platforms
+            gameState.platforms = [];
+            
+            // Add the ground (bottom platform that spans the entire width)
+            gameState.platforms.push({
+                x: 0,
+                y: config.groundLevel,
+                width: canvas.width,
+                height: config.platformHeight,
+                color: '#555555'
+            });
+            
+            // Add some floating platforms at various heights
+            // Platform 1: Left side
+            gameState.platforms.push({
+                x: 0,
+                y: 300,
+                width: 200,
+                height: config.platformHeight,
+                color: '#555555'
+            });
+            
+            // Platform 2: Middle
+            gameState.platforms.push({
+                x: 250,
+                y: 200,
+                width: 150,
+                height: config.platformHeight,
+                color: '#555555'
+            });
+            
+            // Platform 3: Right side
+            gameState.platforms.push({
+                x: 450,
+                y: 320,
+                width: 150,
+                height: config.platformHeight,
+                color: '#555555'
+            });
+            
+            // Platform 4: Upper left
+            gameState.platforms.push({
+                x: 100,
+                y: 100,
+                width: 100,
+                height: config.platformHeight,
+                color: '#555555'
+            });
+        }
+
         // Check if position is occupied by snake
         function isPositionOccupied(position) {
             return gameState.snake.some(segment => 
                 segment.x === position.x && segment.y === position.y
             );
+        }
+
+        // Check if a segment is on a platform
+        function isOnPlatform(segment) {
+            // Check if segment is on any platform
+            for (const platform of gameState.platforms) {
+                // Check if segment's bottom edge is at the platform's top edge
+                if (segment.y + config.gridSize >= platform.y && 
+                    segment.y + config.gridSize <= platform.y + 5 && // Small tolerance for collision
+                    segment.x + config.gridSize > platform.x && 
+                    segment.x < platform.x + platform.width) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         // Update game state
@@ -423,6 +501,11 @@
             // Calculate new head position based on direction
             switch (gameState.direction) {
                 case 'up':
+                    if (gameState.isGrounded) {
+                        // Jump if on platform
+                        gameState.verticalVelocity = -8;
+                        gameState.isGrounded = false;
+                    }
                     head.y -= config.gridSize;
                     break;
                 case 'down':
@@ -434,6 +517,31 @@
                 case 'right':
                     head.x += config.gridSize;
                     break;
+            }
+            
+            // Apply gravity to the head if not grounded
+            if (!gameState.isGrounded) {
+                gameState.verticalVelocity += config.gravity;
+                head.y += gameState.verticalVelocity;
+            }
+            
+            // Check if head is on a platform
+            gameState.isGrounded = isOnPlatform(head);
+            
+            // If grounded, reset vertical velocity
+            if (gameState.isGrounded) {
+                gameState.verticalVelocity = 0;
+                
+                // Adjust head position to sit on top of the platform
+                for (const platform of gameState.platforms) {
+                    if (head.y + config.gridSize >= platform.y && 
+                        head.y + config.gridSize <= platform.y + 5 &&
+                        head.x + config.gridSize > platform.x && 
+                        head.x < platform.x + platform.width) {
+                        head.y = platform.y - config.gridSize;
+                        break;
+                    }
+                }
             }
             
             // Check for wall collision
@@ -559,7 +667,7 @@
                     x: x,
                     y: y,
                     vx: Math.cos(angle) * speed,
-                    vy: Math.sin(angle) * speed,
+                    vy: Math.sin(angle) * speed - 2, // Initial upward velocity component
                     radius: 1 + Math.random() * 3,
                     color: color,
                     alpha: 1,
@@ -573,9 +681,24 @@
             for (let i = gameState.particles.length - 1; i >= 0; i--) {
                 const p = gameState.particles[i];
                 
+                // Apply gravity to particles
+                p.vy += config.gravity * 0.1;
+                
                 p.x += p.vx;
                 p.y += p.vy;
                 p.alpha -= p.decay;
+                
+                // Check for particle collision with platforms
+                for (const platform of gameState.platforms) {
+                    if (p.y + p.radius >= platform.y && 
+                        p.y - p.radius <= platform.y + platform.height &&
+                        p.x + p.radius >= platform.x && 
+                        p.x - p.radius <= platform.x + platform.width) {
+                        // Simple bounce effect
+                        p.vy = -p.vy * 0.6;
+                        break;
+                    }
+                }
                 
                 if (p.alpha <= 0) {
                     gameState.particles.splice(i, 1);
@@ -637,6 +760,12 @@
         function draw() {
             // Clear canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw platforms
+            gameState.platforms.forEach(platform => {
+                ctx.fillStyle = platform.color;
+                ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
+            });
             
             // Draw snake
             gameState.snake.forEach((segment, index) => {
