@@ -364,6 +364,7 @@
 <body>
     <div class="ui-container">
         <div id="score">Score: 0</div>
+        <div id="lives">Lives: 3</div>
         <div id="high-score">High Score: 0</div>
     </div>
     
@@ -461,6 +462,7 @@
             food: { x: 0, y: 0, type: 'regular' },
             score: 0,
             highScore: 0,
+            lives: 3, // Initial lives count
             gameOver: false,
             paused: false,
             lastRenderTime: 0,
@@ -478,6 +480,7 @@
                 { type: 'bonus', color: '#ffbd69', points: 3, probability: 0.2, size: 1.2 },
                 { type: 'special', color: '#00f5d4', points: 5, probability: 0.1, size: 1.5 }
             ],
+
             powerUps: [
                 { type: 'speed', color: '#ff2e63', duration: 5000, icon: '⚡' },
                 { type: 'immunity', color: '#00b8a9', duration: 8000, icon: '🛡️' },
@@ -499,6 +502,7 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const scoreElement = document.getElementById('score');
+        const livesElement = document.getElementById('lives');
         const highScoreElement = document.getElementById('high-score');
         const finalScoreElement = document.getElementById('finalScore');
         const startScreen = document.getElementById('startScreen');
@@ -550,6 +554,7 @@
             gameState.gameSpeed = config.initialSpeed;
             gameState.particles = [];
             gameState.activePowerUp = null;
+
             gameState.collectible = null;
             gameState.collectedItems = {
                 coins: 0,
@@ -562,6 +567,9 @@
             coinCountElement.textContent = '0';
             gemCountElement.textContent = '0';
             keyCountElement.textContent = '0';
+
+            gameState.easterEggActivated = false;
+            gameState.lives = 3; // Reset lives to initial amount
             
             if (gameState.powerUpTimer) {
                 clearTimeout(gameState.powerUpTimer);
@@ -585,78 +593,15 @@
             gameState.currentLevel = levelIndex;
             const level = gameState.levels[levelIndex];
             
-            // Set background
-            canvas.style.backgroundImage = `url('${level.background}')`;
-            
-            // Load platforms
-            gameState.platforms = level.platforms.map(platform => {
-                // Convert platform definition to actual game objects
-                const result = [];
-                for (let x = 0; x < platform.width; x++) {
-                    for (let y = 0; y < platform.height; y++) {
-                        result.push({
-                            x: platform.x + (x * config.gridSize),
-                            y: platform.y + (y * config.gridSize),
-                            type: platform.type
-                        });
-                    }
-                }
-                return result;
-            }).flat();
-        }
-        
-        // Advance to next level
-        function advanceLevel() {
-            // Create level change effect
-            createLevelTransitionEffect();
-            
-            // Set timeout to change level
-            setTimeout(() => {
-                // Move to next level
-                setLevel((gameState.currentLevel + 1) % gameState.levels.length);
-                
-                // Generate new food in case the previous one is now inside a platform
-                generateFood();
-            }, 1000);
-        }
-        
-        // Create level transition effect
-        function createLevelTransitionEffect() {
-            // Flash effect - add overlay with fade out
-            const overlay = document.createElement('div');
-            overlay.style.position = 'absolute';
-            overlay.style.top = '0';
-            overlay.style.left = '0';
-            overlay.style.width = '100%';
-            overlay.style.height = '100%';
-            overlay.style.backgroundColor = 'rgba(233, 69, 96, 0.3)';
-            overlay.style.zIndex = '5';
-            overlay.style.pointerEvents = 'none';
-            overlay.style.transition = 'opacity 1s ease-out';
-            
-            // Add level text
-            const levelText = document.createElement('div');
-            levelText.textContent = `LEVEL ${(gameState.currentLevel + 2)}`;
-            levelText.style.position = 'absolute';
-            levelText.style.top = '50%';
-            levelText.style.left = '50%';
-            levelText.style.transform = 'translate(-50%, -50%)';
-            levelText.style.color = '#fff';
-            levelText.style.fontSize = '2rem';
-            levelText.style.fontWeight = 'bold';
-            levelText.style.textShadow = '0 0 10px rgba(233, 69, 96, 0.8)';
-            overlay.appendChild(levelText);
-            
-            document.querySelector('.game-container').appendChild(overlay);
-            
-            // Fade out after a short delay
-            setTimeout(() => {
-                overlay.style.opacity = '0';
-                setTimeout(() => {
-                    overlay.remove();
-                }, 1000);
-            }, 100);
 
+            // Update score display
+            updateScore();
+            
+            // Update lives display
+            updateLives();
+            
+            // Start game loop
+            window.requestAnimationFrame(gameLoop);
         }
 
         // Generate food at random position
@@ -1401,13 +1346,38 @@
                     x: x,
                     y: y,
                     vx: Math.cos(angle) * speed,
-                    vy: Math.sin(angle) * speed - 2, // Initial upward velocity component
+                    vy: Math.sin(angle) * speed,
                     radius: 1 + Math.random() * 3,
                     color: color,
                     alpha: 1,
                     decay: 0.01 + Math.random() * 0.03
                 });
             }
+        }
+
+        // Reset snake position after losing a life
+        function resetSnakePosition() {
+            // Create new snake at center
+            gameState.snake = [
+                { x: Math.floor(canvas.width / config.gridSize / 2) * config.gridSize, 
+                  y: Math.floor(canvas.height / config.gridSize / 2) * config.gridSize }
+            ];
+            
+            // Reset direction
+            gameState.direction = 'right';
+            gameState.nextDirection = 'right';
+            
+            // Clear any active power-ups
+            if (gameState.powerUpTimer) {
+                clearTimeout(gameState.powerUpTimer);
+                gameState.powerUpTimer = null;
+            }
+            gameState.activePowerUp = null;
+            powerUpIndicator.classList.remove('active');
+            
+            // Generate new food
+            generateFood();
+
         }
 
         // Update particles
@@ -1442,13 +1412,41 @@
 
         // Handle game over
         function handleGameOver() {
-            gameState.gameOver = true;
+            // Decrease lives
+            gameState.lives--;
+            updateLives();
             
-            // Update high score if needed
-            if (gameState.score > gameState.highScore) {
-                gameState.highScore = gameState.score;
-                localStorage.setItem('snakeHighScore', gameState.highScore);
-                highScoreElement.textContent = `High Score: ${gameState.highScore}`;
+            // Create explosion particles at the snake's head
+            createParticles(
+                gameState.snake[0].x + config.gridSize/2,
+                gameState.snake[0].y + config.gridSize/2,
+                '#ff4d4d',
+                30
+            );
+            
+            // Check if player has remaining lives
+            if (gameState.lives <= 0) {
+                // Game over - no lives left
+                gameState.gameOver = true;
+                
+                // Update high score if needed
+                if (gameState.score > gameState.highScore) {
+                    gameState.highScore = gameState.score;
+                    localStorage.setItem('snakeHighScore', gameState.highScore);
+                    highScoreElement.textContent = `High Score: ${gameState.highScore}`;
+                }
+                
+                // Update final score
+                finalScoreElement.textContent = gameState.score;
+                
+                // Update high scores list
+                updateHighScoresList();
+                
+                // Show game over screen
+                gameOverScreen.classList.remove('hidden');
+            } else {
+                // Player still has lives - reset snake and continue
+                resetSnakePosition();
             }
             
             // Update final score
@@ -1469,6 +1467,12 @@
         // Update score display
         function updateScore() {
             scoreElement.textContent = `Score: ${gameState.score}`;
+        }
+
+        // Update lives display
+        function updateLives() {
+            livesElement.textContent = `Lives: ${gameState.lives}`;
+
         }
 
         // Update high scores list
@@ -1542,81 +1546,6 @@
                 
                 // Reset shadow for other elements
                 ctx.shadowBlur = 0;
-        function draw() {
-            // Clear canvas
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // Draw snake
-            gameState.snake.forEach((segment, index) => {
-                // Head has different style (use sprite for head)
-                if (index === 0 && gameState.spriteLoaded) {
-                    // Save the current canvas state
-                    ctx.save();
-                    
-                    // Translate to the center of the head segment for rotation
-                    const centerX = segment.x + config.gridSize / 2;
-                    const centerY = segment.y + config.gridSize / 2;
-                    ctx.translate(centerX, centerY);
-                    
-                    // Rotate based on direction
-                    switch(gameState.direction) {
-                        case 'up':
-                            ctx.rotate(-Math.PI/2); // 90 degrees counter-clockwise
-                            break;
-                        case 'down':
-                            ctx.rotate(Math.PI/2); // 90 degrees clockwise
-                            break;
-                        case 'left':
-                            ctx.rotate(Math.PI); // 180 degrees
-                            break;
-                        case 'right':
-                            // No rotation needed as this is the default
-                            break;
-                    }
-                    
-                    // Translate back for drawing
-                    ctx.translate(-centerX, -centerY);
-                    
-                    // Apply color tint for easter egg if active
-                    if (gameState.easterEggActivated) {
-                        // Create a colored rectangle for tinting
-                        ctx.fillStyle = `hsl(${(Date.now() / 20) % 360}, 100%, 50%)`;
-                        ctx.globalAlpha = 0.7;
-                        ctx.fillRect(segment.x, segment.y, config.gridSize, config.gridSize);
-                        
-                        // Draw the sprite with composition
-                        ctx.globalCompositeOperation = "lighter";
-                        ctx.globalAlpha = 1.0;
-                        ctx.drawImage(gameState.playerSprite, segment.x, segment.y, config.gridSize, config.gridSize);
-                    } else {
-                        // Draw the sprite normally with glow effect
-                        ctx.shadowColor = 'rgba(233, 69, 96, 0.8)';
-                        ctx.shadowBlur = 10;
-                        ctx.drawImage(gameState.playerSprite, segment.x, segment.y, config.gridSize, config.gridSize);
-                        ctx.shadowBlur = 0;
-                    }
-                    
-                    // Restore the canvas state
-                    ctx.restore();
-                } else {
-                    // Body segments remain the same
-                    if (index === 0) {
-                        // Fallback for head if sprite isn't loaded
-                        ctx.fillStyle = gameState.easterEggActivated ? 
-                            `hsl(${(Date.now() / 20) % 360}, 100%, 50%)` : '#e94560';
-                    } else {
-                        // Body segments get progressively darker
-                        const alpha = 1 - (index / gameState.snake.length) * 0.6;
-                        ctx.fillStyle = gameState.easterEggActivated ? 
-                            `hsla(${(Date.now() / 20 + index * 10) % 360}, 100%, 50%, ${alpha})` : 
-                            `rgba(233, 69, 96, ${alpha})`;
-                    }
-                    
-                    // Draw segment with glow effect
-                    ctx.shadowColor = gameState.easterEggActivated ? 
-                        `hsl(${(Date.now() / 20 + index * 10) % 360}, 100%, 50%)` : 
-                        'rgba(233, 69, 96, 0.8)';
-                    ctx.shadowBlur = 10;
                     
                     // Draw rounded rectangle for segment
                     const radius = 4;
