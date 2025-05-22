@@ -1,5 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
+<!--
+    HTML5 Canvas Game Template
+    
+    This template provides a basic structure for HTML5 canvas-based games with:
+    - Responsive canvas that adapts to window size
+    - Optional fixed-size canvas configuration
+    - Basic animation loop
+    - Window resize event handling
+-->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -57,11 +66,11 @@
     <script>
         // Game Configuration
         const config = {
-            canvasWidth: 800,
-            canvasHeight: 600,
-            responsive: true, // Set to false for fixed size
+            canvasWidth: 800,      // Default canvas width in pixels (used for fixed size or max size for responsive)
+            canvasHeight: 600,     // Default canvas height in pixels
+            responsive: true,      // Set to false for fixed size
             backgroundColor: '#ffffff',
-            frameRate: 60
+            frameRate: 60          // Target frame rate (for reference, not enforced)
         };
 
         // Get DOM Elements
@@ -72,16 +81,20 @@
         function setupCanvas() {
             if (config.responsive) {
                 // Responsive sizing based on window dimensions
+                // Calculate dimensions to fit the window while maintaining proportions
                 const containerWidth = Math.min(window.innerWidth * 0.95, config.canvasWidth);
                 const containerHeight = Math.min(window.innerHeight * 0.7, config.canvasHeight);
                 
                 canvas.width = containerWidth;
                 canvas.height = containerHeight;
             } else {
-                // Fixed sizing
+                // Fixed sizing based on configuration
                 canvas.width = config.canvasWidth;
                 canvas.height = config.canvasHeight;
             }
+            
+            // Optional: Additional setup after canvas resize (e.g., redraw if not in animation loop)
+            // draw();
         }
 
         // Sample draw function to demonstrate canvas functionality
