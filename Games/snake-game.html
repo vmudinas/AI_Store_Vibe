@@ -211,8 +211,10 @@
         <div class="start-screen" id="startScreen">
             <h1>Enhanced Snake Game</h1>
             <p>Use Arrow Keys or WASD to move</p>
+            <p>Press UP while on a platform to jump!</p>
             <p>Collect food to grow and earn points</p>
             <p>Watch out for special power-ups!</p>
+            <p>The snake head glows green when you can jump</p>
             <button id="startButton">Start Game</button>
             <div class="controls">
                 <p>P: Pause Game | M: Toggle Sound</p>
@@ -322,11 +324,18 @@
         function initGame() {
             setupCanvas();
             
-            // Create initial snake
+            // Create platforms first
+            generatePlatforms();
+            
+            // Create initial snake on a platform
+            const startPlatform = gameState.platforms[2]; // Middle platform
             gameState.snake = [
-                { x: Math.floor(canvas.width / config.gridSize / 2) * config.gridSize, 
-                  y: Math.floor(canvas.height / config.gridSize / 2) * config.gridSize }
+                { x: startPlatform.x + startPlatform.width / 2, 
+                  y: startPlatform.y - config.gridSize }
             ];
+            
+            // Set initial grounded state
+            gameState.isGrounded = true;
             
             gameState.direction = 'right';
             gameState.nextDirection = 'right';
@@ -379,14 +388,19 @@
                 }
             }
             
-            // Generate random position that doesn't overlap with snake
+            // Generate random position that doesn't overlap with snake or platforms
             let position;
-            do {
+            let validPosition = false;
+            
+            while (!validPosition) {
                 position = {
                     x: Math.floor(Math.random() * (canvas.width / config.gridSize)) * config.gridSize,
                     y: Math.floor(Math.random() * (canvas.height / config.gridSize)) * config.gridSize
                 };
-            } while (isPositionOccupied(position));
+                
+                // Check if position is not on a platform and not occupied by snake
+                validPosition = !isPositionOccupied(position) && !isPositionOnPlatform(position);
+            }
             
             gameState.food = { ...position, type: foodType };
             
@@ -396,20 +410,39 @@
             }
         }
 
+        // Check if position is on a platform
+        function isPositionOnPlatform(position) {
+            for (const platform of gameState.platforms) {
+                if (position.y + config.gridSize > platform.y && 
+                    position.y < platform.y + platform.height &&
+                    position.x + config.gridSize > platform.x && 
+                    position.x < platform.x + platform.width) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         // Generate power-up at random position
         function generatePowerUp() {
             // Select random power-up type
             const powerUpType = gameState.powerUps[Math.floor(Math.random() * gameState.powerUps.length)];
             
-            // Generate random position that doesn't overlap with snake or food
+            // Generate random position that doesn't overlap with snake, food, or platforms
             let position;
-            do {
+            let validPosition = false;
+            
+            while (!validPosition) {
                 position = {
                     x: Math.floor(Math.random() * (canvas.width / config.gridSize)) * config.gridSize,
                     y: Math.floor(Math.random() * (canvas.height / config.gridSize)) * config.gridSize
                 };
-            } while (isPositionOccupied(position) || 
-                    (position.x === gameState.food.x && position.y === gameState.food.y));
+                
+                // Check if position is not occupied by snake, not the same as food, and not on a platform
+                validPosition = !isPositionOccupied(position) && 
+                               !(position.x === gameState.food.x && position.y === gameState.food.y) &&
+                               !isPositionOnPlatform(position);
+            }
             
             gameState.powerUp = { ...position, ...powerUpType };
         }
@@ -769,8 +802,14 @@
             
             // Draw snake
             gameState.snake.forEach((segment, index) => {
-                // Head has different style
+                // Head has different style and shows grounded state
                 if (index === 0) {
+                    // Add glow effect when grounded (can jump)
+                    if (gameState.isGrounded) {
+                        ctx.shadowColor = '#00ff00';
+                        ctx.shadowBlur = 10;
+                    }
+                    
                     ctx.fillStyle = gameState.easterEggActivated ? 
                         `hsl(${(Date.now() / 20) % 360}, 100%, 50%)` : '#e94560';
                 } else {
