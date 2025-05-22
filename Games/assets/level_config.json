@@ -1,0 +1,56 @@
+{
+  "levels": [
+    {
+      "name": "Digital Grid",
+      "background": "backgrounds/bg_digital_grid.png",
+      "description": "Dark blue digital grid landscape with glowing pink and purple neon lines",
+      "platforms": [
+        {"x": 100, "y": 100, "width": 1, "height": 3, "type": "wall_pink"},
+        {"x": 400, "y": 200, "width": 3, "height": 1, "type": "wall_blue"},
+        {"x": 300, "y": 300, "width": 1, "height": 3, "type": "wall_pink"},
+        {"x": 200, "y": 100, "width": 3, "height": 1, "type": "wall_blue"}
+      ]
+    },
+    {
+      "name": "Circuit Board",
+      "background": "backgrounds/bg_circuit_board.png",
+      "description": "Dark circuit board pattern with glowing red traces on deep blue background",
+      "platforms": [
+        {"x": 150, "y": 100, "width": 5, "height": 1, "type": "wall_blue"},
+        {"x": 250, "y": 200, "width": 1, "height": 5, "type": "wall_pink"},
+        {"x": 350, "y": 300, "width": 5, "height": 1, "type": "wall_blue"},
+        {"x": 450, "y": 150, "width": 1, "height": 5, "type": "wall_pink"}
+      ]
+    },
+    {
+      "name": "Neon Landscape",
+      "background": "backgrounds/bg_neon_landscape.png",
+      "description": "Abstract digital landscape with neon pink highlights against deep blue/purple gradient",
+      "platforms": [
+        {"x": 100, "y": 150, "width": 3, "height": 1, "type": "wall_special"},
+        {"x": 200, "y": 250, "width": 1, "height": 3, "type": "wall_special"},
+        {"x": 300, "y": 100, "width": 3, "height": 1, "type": "wall_special"},
+        {"x": 400, "y": 200, "width": 1, "height": 3, "type": "wall_special"},
+        {"x": 150, "y": 350, "width": 5, "height": 1, "type": "wall_special"}
+      ]
+    }
+  ],
+  "platformTypes": {
+    "wall_pink": {
+      "color": "#e94560",
+      "solid": true,
+      "damaging": false
+    },
+    "wall_blue": {
+      "color": "#4ea5d9",
+      "solid": true,
+      "damaging": false
+    },
+    "wall_special": {
+      "color": "#9d4edd",
+      "solid": true,
+      "damaging": false,
+      "special": true
+    }
+  }
+}

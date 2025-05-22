@@ -223,6 +223,7 @@
             <h2>Game Over</h2>
             <p>Your Score: <span id="finalScore">0</span></p>
             <button id="restartButton">Play Again</button>
+            <button id="gameOverMainMenuButton">Main Menu</button>
             
             <div class="high-scores">
                 <h3>High Scores</h3>
@@ -233,6 +234,7 @@
         <div class="pause-screen hidden" id="pauseScreen">
             <h2>Game Paused</h2>
             <button id="resumeButton">Resume</button>
+            <button id="mainMenuButton">Main Menu</button>
         </div>
     </div>
 
@@ -299,6 +301,8 @@
         const powerUpIcon = document.getElementById('powerUpIcon');
         const powerUpText = document.getElementById('powerUpText');
         const soundToggle = document.getElementById('soundToggle');
+        const mainMenuButton = document.getElementById('mainMenuButton');
+        const gameOverMainMenuButton = document.getElementById('gameOverMainMenuButton');
 
         // Sound Manager
         const soundManager = {
@@ -1044,6 +1048,19 @@
             }
         }
 
+        // Function to show a screen with animation
+        function showScreen(screen) {
+            // First hide all screens
+            startScreen.classList.add('hidden');
+            gameOverScreen.classList.add('hidden');
+            pauseScreen.classList.add('hidden');
+            
+            // Then show the requested screen with a small delay for better transition
+            setTimeout(() => {
+                screen.classList.remove('hidden');
+            }, 50);
+        }
+        
         // Toggle pause state
         function togglePause() {
             if (gameState.gameOver) return;
@@ -1051,7 +1068,7 @@
             gameState.paused = !gameState.paused;
             
             if (gameState.paused) {
-                pauseScreen.classList.remove('hidden');
+                showScreen(pauseScreen);
                 // Pause background music
                 if (config.soundEnabled) {
                     soundManager.stopBgMusic();
@@ -1113,9 +1130,44 @@
         });
         resumeButton.addEventListener('click', togglePause);
         soundToggle.addEventListener('click', toggleSound);
+        
+        // Main menu buttons
+        mainMenuButton.addEventListener('click', returnToMainMenu);
+        gameOverMainMenuButton.addEventListener('click', returnToMainMenu);
+        
+        // Function to return to main menu
+        function returnToMainMenu() {
+            // Reset game state
+            gameState.gameOver = true;
+            gameState.paused = false;
+            
+            // Show start screen with animation
+            showScreen(startScreen);
+        }
+
+        // Load player sprite for snake head
+        function loadPlayerSprite() {
+            // This is a placeholder implementation
+            // In the actual implementation, this would load the sprite image
+            gameState.playerSprite = new Image();
+            gameState.playerSprite.src = ''; // Empty for now as a placeholder
+            
+            // Add a load event just to be safe
+            gameState.playerSprite.onload = function() {
+                console.log("Player sprite loaded");
+            };
+            
+            // Error handling
+            gameState.playerSprite.onerror = function() {
+                console.log("Could not load player sprite");
+            };
+        }
 
         // Setup canvas initially
         setupCanvas();
+        
+        // Load player sprite
+        loadPlayerSprite();
 
         // Add listener to initialize audio on first user interaction
         // This is required by browsers to allow audio playback
