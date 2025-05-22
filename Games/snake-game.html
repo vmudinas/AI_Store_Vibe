@@ -171,6 +171,28 @@
             cursor: pointer;
             z-index: 5;
         }
+        
+        .back-button {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(10, 10, 20, 0.7);
+            border: none;
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            z-index: 5;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        
+        .back-button:hover {
+            background: rgba(233, 69, 96, 0.7);
+        }
 
         @media (max-width: 600px) {
             .game-container {
@@ -206,6 +228,7 @@
             <span id="powerUpText"></span>
         </div>
         
+        <a href="../index.html" class="back-button">← Home</a>
         <button class="sound-toggle" id="soundToggle">🔊</button>
         
         <div class="start-screen" id="startScreen">
