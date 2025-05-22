@@ -1,0 +1,17 @@
+# Special Platform Element
+
+**AI Image Generation Prompt:**
+"Create a 20x20 pixel platform with a pulsing purple glow effect in a digital aesthetic. The core should be a semi-translucent dark purple (#9d4edd at 70% opacity) with a bright purple glow effect radiating outward. Include subtle animated-looking elements that suggest the platform has special properties."
+
+**Purpose:** Special platform element for Snake game levels.
+
+**Technical Requirements:**
+- Resolution: 20x20 pixels
+- Format: PNG with transparency
+- Primary colors: Dark purple (#1a1a2e), Neon purple (#9d4edd)
+
+**Style Notes:**
+- Should appear as a special platform with a distinct look from regular walls
+- The glow effect should suggest special properties
+- Should match the overall game aesthetic
+- Will be used as a special element in the game that modifies gameplay in some way
