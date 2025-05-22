@@ -246,7 +246,9 @@
             speedIncrease: 0.5,
             maxSpeed: 50,
             responsive: true,
-            soundEnabled: true
+            soundEnabled: true,
+            musicVolume: 0.3,
+            effectsVolume: 0.5
         };
 
         // Game State
@@ -298,6 +300,193 @@
         const powerUpText = document.getElementById('powerUpText');
         const soundToggle = document.getElementById('soundToggle');
 
+        // Sound Manager
+        const soundManager = {
+            context: null,
+            bgMusic: null,
+            bgMusicNode: null,
+            bgMusicGain: null,
+            effectsGain: null,
+            initialized: false,
+
+            // Initialize audio context
+            init() {
+                if (this.initialized) return;
+                
+                // Create audio context
+                this.context = new (window.AudioContext || window.webkitAudioContext)();
+                
+                // Create gain nodes for volume control
+                this.bgMusicGain = this.context.createGain();
+                this.bgMusicGain.gain.value = config.musicVolume;
+                this.bgMusicGain.connect(this.context.destination);
+                
+                this.effectsGain = this.context.createGain();
+                this.effectsGain.gain.value = config.effectsVolume;
+                this.effectsGain.connect(this.context.destination);
+                
+                // Generate background music
+                this.generateBgMusic();
+                
+                this.initialized = true;
+            },
+            
+            // Generate a simple background music loop
+            generateBgMusic() {
+                const numNotes = 8;
+                const noteDuration = 0.5;
+                const totalDuration = numNotes * noteDuration;
+                
+                // Create buffer for the music loop
+                const sampleRate = this.context.sampleRate;
+                const buffer = this.context.createBuffer(1, sampleRate * totalDuration, sampleRate);
+                const data = buffer.getChannelData(0);
+                
+                // Simple melody pattern
+                const notes = [261.63, 329.63, 392.00, 523.25, 392.00, 329.63, 261.63, 329.63]; // C, E, G, C, G, E, C, E
+                
+                for (let i = 0; i < numNotes; i++) {
+                    const freq = notes[i];
+                    const startSample = Math.floor(i * noteDuration * sampleRate);
+                    const endSample = Math.floor((i + 0.8) * noteDuration * sampleRate); // Note slightly shorter than full duration
+                    
+                    for (let j = startSample; j < endSample; j++) {
+                        // Create a sine wave with fade in/out
+                        const t = (j - startSample) / (endSample - startSample);
+                        const envelope = 0.5 * Math.sin(Math.PI * t); // Simple amplitude envelope
+                        data[j] += 0.3 * envelope * Math.sin(freq * 2 * Math.PI * (j - startSample) / sampleRate);
+                    }
+                }
+                
+                this.bgMusic = buffer;
+            },
+            
+            // Play background music in a loop
+            playBgMusic() {
+                if (!this.initialized || !config.soundEnabled) return;
+                
+                // Stop any currently playing music
+                if (this.bgMusicNode) {
+                    this.bgMusicNode.stop();
+                    this.bgMusicNode = null;
+                }
+                
+                // Create buffer source
+                this.bgMusicNode = this.context.createBufferSource();
+                this.bgMusicNode.buffer = this.bgMusic;
+                this.bgMusicNode.loop = true;
+                this.bgMusicNode.connect(this.bgMusicGain);
+                this.bgMusicNode.start();
+            },
+            
+            // Stop background music
+            stopBgMusic() {
+                if (this.bgMusicNode) {
+                    this.bgMusicNode.stop();
+                    this.bgMusicNode = null;
+                }
+            },
+            
+            // Play a tone with specified parameters
+            playTone(freq, duration, type = 'sine', volumeMultiplier = 1.0) {
+                if (!this.initialized || !config.soundEnabled) return;
+                
+                const oscillator = this.context.createOscillator();
+                const gainNode = this.context.createGain();
+                
+                oscillator.type = type;
+                oscillator.frequency.value = freq;
+                
+                gainNode.gain.value = config.effectsVolume * volumeMultiplier;
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(this.context.destination);
+                
+                // Envelope to avoid clicks
+                gainNode.gain.setValueAtTime(0, this.context.currentTime);
+                gainNode.gain.linearRampToValueAtTime(config.effectsVolume * volumeMultiplier, this.context.currentTime + 0.01);
+                gainNode.gain.linearRampToValueAtTime(0, this.context.currentTime + duration);
+                
+                oscillator.start();
+                oscillator.stop(this.context.currentTime + duration);
+            },
+            
+            // Play a food collection sound
+            playFoodSound(foodType) {
+                // Different sounds based on food type
+                switch(foodType) {
+                    case 'regular':
+                        this.playTone(523.25, 0.1); // C5
+                        break;
+                    case 'bonus':
+                        this.playTone(659.25, 0.2); // E5
+                        this.playTone(783.99, 0.2, 'sine', 0.7); // G5
+                        break;
+                    case 'special':
+                        this.playTone(523.25, 0.1); // C5
+                        this.playTone(659.25, 0.1, 'sine', 0.8); // E5
+                        this.playTone(783.99, 0.2, 'sine', 0.9); // G5
+                        break;
+                }
+            },
+            
+            // Play power-up collection sound
+            playPowerUpSound(powerUpType) {
+                switch(powerUpType) {
+                    case 'speed':
+                        // Rising tone for speed
+                        for (let i = 0; i < 5; i++) {
+                            setTimeout(() => {
+                                this.playTone(440 + i * 100, 0.1, 'square', 0.4);
+                            }, i * 80);
+                        }
+                        break;
+                    case 'immunity':
+                        // Immunity shield sound
+                        this.playTone(392, 0.3, 'sine', 0.6);
+                        setTimeout(() => this.playTone(587.33, 0.4, 'sine', 0.4), 200);
+                        break;
+                    case 'multiplier':
+                        // Multiplier sound
+                        this.playTone(523.25, 0.2, 'sawtooth', 0.4);
+                        setTimeout(() => this.playTone(659.25, 0.3, 'sawtooth', 0.3), 150);
+                        setTimeout(() => this.playTone(783.99, 0.4, 'sawtooth', 0.4), 300);
+                        break;
+                }
+            },
+            
+            // Play game over sound
+            playGameOverSound() {
+                // Descending sad tone
+                this.playTone(493.88, 0.3, 'sawtooth', 0.5); // B4
+                setTimeout(() => this.playTone(392.00, 0.5, 'sawtooth', 0.6), 250); // G4
+                setTimeout(() => this.playTone(329.63, 0.7, 'sawtooth', 0.7), 600); // E4
+            },
+            
+            // Play button click sound
+            playButtonSound() {
+                this.playTone(587.33, 0.1, 'square', 0.3); // D5
+            },
+            
+            // Update sound state based on config
+            updateSoundState() {
+                if (config.soundEnabled) {
+                    // Resume context if suspended
+                    if (this.context && this.context.state === 'suspended') {
+                        this.context.resume();
+                    }
+                    
+                    // Start bg music if not playing and game is active
+                    if (!gameState.gameOver && !gameState.paused) {
+                        this.playBgMusic();
+                    }
+                } else {
+                    // Stop all sounds
+                    this.stopBgMusic();
+                }
+            }
+        };
+
         // Initialize canvas size
         function setupCanvas() {
             if (config.responsive) {
@@ -348,6 +537,15 @@
             
             // Update score display
             updateScore();
+            
+            // Initialize audio if needed and play background music
+            if (config.soundEnabled && !soundManager.initialized) {
+                soundManager.init();
+            }
+            
+            if (config.soundEnabled) {
+                soundManager.playBgMusic();
+            }
             
             // Start game loop
             window.requestAnimationFrame(gameLoop);
@@ -480,6 +678,11 @@
                 gameState.score += points;
                 updateScore();
                 
+                // Play food collection sound
+                if (config.soundEnabled) {
+                    soundManager.playFoodSound(gameState.food.type);
+                }
+                
                 // Create particles
                 createParticles(gameState.food.x + config.gridSize/2, gameState.food.y + config.gridSize/2, 
                                 foodTypeDetails.color, 10);
@@ -541,6 +744,11 @@
             // Create particles
             createParticles(powerUp.x + config.gridSize/2, powerUp.y + config.gridSize/2, 
                             powerUp.color, 20);
+                            
+            // Play power-up sound
+            if (config.soundEnabled) {
+                soundManager.playPowerUpSound(powerUp.type);
+            }
         }
 
         // Deactivate power-up
@@ -586,6 +794,12 @@
         // Handle game over
         function handleGameOver() {
             gameState.gameOver = true;
+            
+            // Play game over sound
+            if (config.soundEnabled) {
+                soundManager.stopBgMusic();
+                soundManager.playGameOverSound();
+            }
             
             // Update high score if needed
             if (gameState.score > gameState.highScore) {
@@ -838,9 +1052,22 @@
             
             if (gameState.paused) {
                 pauseScreen.classList.remove('hidden');
+                // Pause background music
+                if (config.soundEnabled) {
+                    soundManager.stopBgMusic();
+                }
             } else {
                 pauseScreen.classList.add('hidden');
+                // Resume background music
+                if (config.soundEnabled) {
+                    soundManager.playBgMusic();
+                }
                 window.requestAnimationFrame(gameLoop);
+            }
+            
+            // Play button sound
+            if (config.soundEnabled) {
+                soundManager.playButtonSound();
             }
         }
 
@@ -848,16 +1075,39 @@
         function toggleSound() {
             config.soundEnabled = !config.soundEnabled;
             soundToggle.textContent = config.soundEnabled ? '🔊' : '🔇';
+            
+            // Initialize sound if first time enabling
+            if (config.soundEnabled && !soundManager.initialized) {
+                soundManager.init();
+            }
+            
+            soundManager.updateSoundState();
+            
+            // Play button sound if enabling
+            if (config.soundEnabled) {
+                soundManager.playButtonSound();
+            }
         }
 
         // Event listeners
         window.addEventListener('keydown', handleKeydown);
         window.addEventListener('resize', setupCanvas);
         startButton.addEventListener('click', () => {
+            // Play button sound
+            if (config.soundEnabled) {
+                if (!soundManager.initialized) {
+                    soundManager.init();
+                }
+                soundManager.playButtonSound();
+            }
             startScreen.classList.add('hidden');
             initGame();
         });
         restartButton.addEventListener('click', () => {
+            // Play button sound
+            if (config.soundEnabled) {
+                soundManager.playButtonSound();
+            }
             gameOverScreen.classList.add('hidden');
             initGame();
         });
@@ -866,6 +1116,15 @@
 
         // Setup canvas initially
         setupCanvas();
+
+        // Add listener to initialize audio on first user interaction
+        // This is required by browsers to allow audio playback
+        document.addEventListener('click', function initAudio() {
+            if (config.soundEnabled && !soundManager.initialized) {
+                soundManager.init();
+            }
+            document.removeEventListener('click', initAudio);
+        });
     </script>
 </body>
 </html>
