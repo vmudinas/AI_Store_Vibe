@@ -1,0 +1,17 @@
+# Neon Landscape Background
+
+**AI Image Generation Prompt:**
+"Create an abstract digital landscape with neon pink highlights against a deep blue/purple gradient background. Include abstract geometric mountains or structures on a horizon with a retro-futuristic sunset/sunrise feel. Resolution 600x400 pixels. The color scheme should blend from dark blue (#0f3460) at the top to deeper purple (#1a1a2e) at the bottom, with bright neon pink (#e94560) accents highlighting landscape features."
+
+**Purpose:** Background for Level 3 of the Snake game.
+
+**Technical Requirements:**
+- Resolution: 600x400 pixels
+- Format: PNG with transparency
+- Primary colors: Dark blue (#0f3460), Deep purple (#1a1a2e), Neon pink (#e94560)
+
+**Style Notes:**
+- Should appear as a stylized horizon with abstract landscape elements
+- '80s retro-futuristic aesthetic with sci-fi elements
+- Subtle glow effects on the neon elements
+- Dark atmosphere that creates visual interest without being distracting to gameplay

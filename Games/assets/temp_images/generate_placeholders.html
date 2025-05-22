@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Generate Placeholder Images</title>
+  <script>
+    function generateImages() {
+      // Generate background placeholders
+      generateBackground('bg_digital_grid', '#1a1a2e', '#e94560');
+      generateBackground('bg_circuit_board', '#16213e', '#e94560');  
+      generateBackground('bg_neon_landscape', '#0f3460', '#e94560');
+      
+      // Generate platform placeholders
+      generatePlatform('wall_pink', '#1a1a2e', '#e94560');
+      generatePlatform('wall_blue', '#1a1a2e', '#4895ef');
+      generatePlatform('special_platform', '#1a1a2e', '#9d4edd');
+    }
+    
+    function generateBackground(name, bgColor, fgColor) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 600;
+      canvas.height = 400;
+      const ctx = canvas.getContext('2d');
+      
+      // Fill background
+      ctx.fillStyle = bgColor;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Draw pattern
+      ctx.strokeStyle = fgColor;
+      ctx.lineWidth = 1;
+      
+      // Draw grid or pattern based on name
+      if (name === 'bg_digital_grid') {
+        // Grid pattern
+        for (let x = 0; x < canvas.width; x += 40) {
+          ctx.beginPath();
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, canvas.height);
+          ctx.stroke();
+        }
+        for (let y = 0; y < canvas.height; y += 40) {
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(canvas.width, y);
+          ctx.stroke();
+        }
+      } else if (name === 'bg_circuit_board') {
+        // Circuit pattern
+        for (let i = 0; i < 15; i++) {
+          const x = Math.random() * canvas.width;
+          const y = Math.random() * canvas.height;
+          const size = 20 + Math.random() * 100;
+          
+          ctx.beginPath();
+          ctx.moveTo(x, y);
+          ctx.lineTo(x + size, y);
+          ctx.lineTo(x + size, y + size);
+          ctx.stroke();
+        }
+      } else {
+        // Landscape pattern
+        ctx.beginPath();
+        ctx.moveTo(0, 300);
+        for (let x = 0; x < canvas.width; x += 10) {
+          const height = 250 + Math.sin(x/30) * 50;
+          ctx.lineTo(x, height);
+        }
+        ctx.lineTo(canvas.width, 300);
+        ctx.lineTo(canvas.width, canvas.height);
+        ctx.lineTo(0, canvas.height);
+        ctx.closePath();
+        ctx.fillStyle = fgColor;
+        ctx.globalAlpha = 0.2;
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      }
+      
+      // Add text label
+      ctx.font = '20px Arial';
+      ctx.fillStyle = fgColor;
+      ctx.textAlign = 'center';
+      ctx.fillText(name, canvas.width/2, 30);
+      
+      // Download image
+      const imgData = canvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.download = name + '.png';
+      link.href = imgData;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+    
+    function generatePlatform(name, bgColor, fgColor) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 20;
+      canvas.height = 20;
+      const ctx = canvas.getContext('2d');
+      
+      // Fill transparent background
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // Draw platform
+      ctx.fillStyle = bgColor;
+      ctx.fillRect(2, 2, canvas.width-4, canvas.height-4);
+      
+      // Draw border
+      ctx.strokeStyle = fgColor;
+      ctx.lineWidth = 2;
+      ctx.strokeRect(1, 1, canvas.width-2, canvas.height-2);
+      
+      // Special effects for special platform
+      if (name === 'special_platform') {
+        ctx.fillStyle = fgColor;
+        ctx.globalAlpha = 0.3;
+        ctx.beginPath();
+        ctx.arc(canvas.width/2, canvas.height/2, 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      }
+      
+      // Download image
+      const imgData = canvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.download = name + '.png';
+      link.href = imgData;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  </script>
+</head>
+<body>
+  <h1>Generate Placeholder Images</h1>
+  <p>Click the button below to generate placeholder images for backgrounds and platforms.</p>
+  <button onclick="generateImages()">Generate Images</button>
+  <p>Note: These are just placeholders and should be replaced with AI-generated images.</p>
+</body>
+</html>

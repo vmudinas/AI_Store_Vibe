@@ -1,0 +1,54 @@
+{
+  "levels": [
+    {
+      "name": "Digital Grid",
+      "background": "backgrounds/bg_digital_grid.png",
+      "description": "Dark blue digital grid landscape with glowing pink and purple neon lines",
+      "platforms": [
+        {"x": 100, "y": 100, "width": 1, "height": 3, "type": "wall_pink"},
+        {"x": 400, "y": 200, "width": 3, "height": 1, "type": "wall_blue"},
+        {"x": 300, "y": 300, "width": 1, "height": 3, "type": "wall_pink"},
+        {"x": 200, "y": 100, "width": 3, "height": 1, "type": "wall_blue"}
+      ]
+    },
+    {
+      "name": "Circuit Board",
+      "background": "backgrounds/bg_circuit_board.png",
+      "description": "Dark circuit board pattern with glowing red traces on deep blue background",
+      "platforms": [
+        {"x": 100, "y": 200, "width": 5, "height": 1, "type": "wall_pink"},
+        {"x": 300, "y": 100, "width": 1, "height": 5, "type": "wall_blue"},
+        {"x": 150, "y": 300, "width": 1, "height": 2, "type": "special_platform"},
+        {"x": 400, "y": 150, "width": 2, "height": 1, "type": "special_platform"}
+      ]
+    },
+    {
+      "name": "Neon Landscape",
+      "background": "backgrounds/bg_neon_landscape.png",
+      "description": "Abstract digital landscape with neon pink highlights against deep blue gradient",
+      "platforms": [
+        {"x": 200, "y": 150, "width": 1, "height": 4, "type": "wall_pink"},
+        {"x": 300, "y": 200, "width": 4, "height": 1, "type": "wall_blue"},
+        {"x": 150, "y": 100, "width": 2, "height": 2, "type": "wall_pink"},
+        {"x": 350, "y": 300, "width": 2, "height": 2, "type": "wall_blue"}
+      ]
+    }
+  ],
+  "platformTypes": {
+    "wall_pink": {
+      "color": "#e94560",
+      "description": "Pink neon wall that blocks the snake's path",
+      "imagePath": "platforms/wall_pink.png"
+    },
+    "wall_blue": {
+      "color": "#4895ef",
+      "description": "Blue neon wall that blocks the snake's path",
+      "imagePath": "platforms/wall_blue.png"
+    },
+    "special_platform": {
+      "color": "#9d4edd",
+      "description": "Special platform with unique effects",
+      "imagePath": "platforms/special_platform.png"
+    }
+  }
+}
