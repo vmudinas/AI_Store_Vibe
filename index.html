@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Store Vibe - Snake Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+            color: #e94560;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            color: #e94560;
+            text-shadow: 0 0 10px rgba(233, 69, 96, 0.7);
+        }
+
+        h2 {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            color: #e94560;
+        }
+
+        p {
+            margin: 10px 0;
+            font-size: 1.2rem;
+            color: #fff;
+            max-width: 600px;
+        }
+
+        .container {
+            background: rgba(10, 10, 20, 0.7);
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 0 20px rgba(233, 69, 96, 0.3);
+            margin: 20px;
+            max-width: 800px;
+        }
+
+        .play-button {
+            background: linear-gradient(45deg, #e94560, #c73e6b);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            margin: 30px 0;
+            font-size: 1.2rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 10px rgba(233, 69, 96, 0.5);
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .play-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(233, 69, 96, 0.8);
+        }
+
+        .github-link {
+            margin-top: 20px;
+            color: #fff;
+            text-decoration: none;
+            font-size: 0.9rem;
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+        }
+
+        .github-link:hover {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>AI Store Vibe</h1>
+        <h2>Snake Game</h2>
+        <p>
+            Welcome to the Enhanced Snake Game, created with HTML, JavaScript, and CSS. 
+            This game was developed using the Claude 3.7 model in a single session.
+        </p>
+        <p>
+            Features include power-ups, special foods, particle effects, and mobile responsiveness.
+        </p>
+        <a href="Games/snake-game.html" class="play-button">Play Snake Game</a>
+        <p>
+            <a href="https://github.com/vmudinas/AI_Store_Vibe" class="github-link" target="_blank">View on GitHub</a>
+        </p>
+    </div>
+</body>
+</html>
