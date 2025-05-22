@@ -1,0 +1,32 @@
+{
+  "name": "ai_store_vibe",
+  "version": "1.0.0",
+  "description": "AI Store Vibe - HTML5 Canvas Games",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest",
+    "test:unit": "jest tests/unit",
+    "test:integration": "jest tests/integration",
+    "test:coverage": "jest --coverage"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vmudinas/AI_Store_Vibe.git"
+  },
+  "keywords": [
+    "games",
+    "html5",
+    "canvas"
+  ],
+  "author": "",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/vmudinas/AI_Store_Vibe/issues"
+  },
+  "homepage": "https://github.com/vmudinas/AI_Store_Vibe#readme",
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "puppeteer": "^22.0.0"
+  }
+}

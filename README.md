@@ -23,3 +23,44 @@ The game includes AI-generated visual elements:
 - All assets follow a consistent cyberpunk/neon aesthetic
 
 To update/generate the actual AI images, see the descriptions in the `/Games/assets/` directory.
+
+## Testing
+
+The project includes both unit and integration tests.
+
+### Unit Tests
+
+Unit tests are written with Jest and focus on testing the core game logic:
+- Game initialization and setup
+- Game state management
+- Movement and collision detection
+- Game mechanics
+
+Run unit tests with:
+```bash
+npm run test:unit
+```
+
+### Integration Tests
+
+Integration tests use Puppeteer to test the games in a real browser environment:
+- Game loading and initialization
+- User interactions (clicking buttons, key presses)
+- Game flow (start, play, game over)
+
+Run integration tests with:
+```bash
+npm run test:integration
+```
+
+### CI/CD
+
+The project uses GitHub Actions for continuous integration:
+- Automatically runs all tests on push to main branch and pull requests
+- Generates test coverage reports
+- Publishes test results as artifacts
+
+Run all tests and generate coverage report:
+```bash
+npm test
+```
