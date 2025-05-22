@@ -1,0 +1,17 @@
+# Blue Wall Platform Element
+
+**AI Image Generation Prompt:**
+"Generate a single 20x20 pixel block with a dark center and glowing blue neon outline in tech style. The core should be dark (#1a1a2e) with a vibrant blue (#4895ef) glowing border that appears to emit light. The glow should extend slightly beyond the solid border."
+
+**Purpose:** Wall element/obstacle for Snake game levels.
+
+**Technical Requirements:**
+- Resolution: 20x20 pixels
+- Format: PNG with transparency
+- Primary colors: Dark blue (#1a1a2e), Neon blue (#4895ef)
+
+**Style Notes:**
+- Should appear as a solid block with a neon outline
+- The glow effect should be noticeable but not overwhelming
+- Should match the overall game aesthetic
+- Will be used as a wall element that blocks the snake's path

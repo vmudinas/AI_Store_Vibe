@@ -1,0 +1,17 @@
+# Digital Grid Background
+
+**AI Image Generation Prompt:**
+"Create a dark blue digital grid landscape with glowing pink and purple neon lines in a cyberpunk style. The grid should extend to a horizon with subtle perspective. Resolution 600x400 pixels. The color scheme should match a retro-futuristic game aesthetic with primary colors being dark blue (#1a1a2e) background and neon pink/purple (#e94560, #9d4edd) highlights."
+
+**Purpose:** Background for Level 1 of the Snake game.
+
+**Technical Requirements:**
+- Resolution: 600x400 pixels
+- Format: PNG with transparency
+- Primary colors: Dark blue (#1a1a2e), Neon pink (#e94560), Neon purple (#9d4edd)
+
+**Style Notes:**
+- Should appear as a digital grid extending to infinity
+- Subtle glow effects on the grid lines
+- Dark atmosphere with high contrast neon elements
+- Should not visually interfere with the snake and food elements of the game

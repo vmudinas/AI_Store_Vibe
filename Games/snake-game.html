@@ -34,6 +34,8 @@
         canvas {
             display: block;
             background: linear-gradient(45deg, #0f0f1a, #1a1a2e);
+            background-size: cover;
+            background-position: center;
         }
 
         .ui-container {
@@ -329,22 +331,15 @@
         </div>
         
         <button class="sound-toggle" id="soundToggle">🔊</button>
-        
+
         <div class="start-screen" id="startScreen">
-        <div class="game-logo">
-                <svg width="80" height="80" viewBox="0 0 80 80">
-                    <path d="M30,20 L50,20 L50,30 L60,30 L60,50 L40,50 L40,60 L20,60 L20,40 L30,40 Z" 
-                          fill="#e94560" stroke="#fff" stroke-width="2"></path>
-                </svg>
-            </div>
             <h1>Enhanced Snake Game</h1>
-            <p class="tagline">Navigate, Eat, Grow, Repeat!</p>
-            <div class="instructions">
-                <p>Use Arrow Keys or WASD to move</p>
-                <p>Collect food to grow and earn points</p>
-                <p>Watch out for special power-ups!</p>
-            </div>
-            <button id="startButton" class="pulse-btn">Start Game</button>
+            <p>Use Arrow Keys or WASD to move</p>
+            <p>Collect food to grow and earn points</p>
+            <p>Watch out for special power-ups!</p>
+            <p>Avoid walls and obstacles that appear in different levels</p>
+            <p>Every 50 points advances you to a new level!</p>
+            <button id="startButton">Start Game</button>
             <div class="controls">
                 <p>P: Pause Game | M: Toggle Sound</p>
             </div>
@@ -398,7 +393,8 @@
             platformHeight: 10          // Height of platforms
         };
 
-          // Game State
+
+        // Game State
         const gameState = {
             snake: [],
             direction: 'right',
@@ -412,9 +408,6 @@
             gameSpeed: config.initialSpeed,
             powerUp: null,
             particles: [],
-
-            playerSprite: null, // Store player sprite image
-            spriteLoaded: false, // Flag to track if sprite is loaded
             foodTypes: [
                 { type: 'regular', color: '#e94560', points: 1, probability: 0.7, size: 1 },
                 { type: 'bonus', color: '#ffbd69', points: 3, probability: 0.2, size: 1.2 },
@@ -430,10 +423,10 @@
             konami: [38, 38, 40, 40, 37, 39, 37, 39, 66, 65], // Up Up Down Down Left Right Left Right B A
             konamiIndex: 0,
             easterEggActivated: false,
-            platforms: [],              // Array to store platform objects
-            verticalVelocity: 0,        // Current vertical velocity for gravity
-            isGrounded: false           // Flag to track if the snake is on ground/platform
-            easterEggActivated: false
+            // Add level-related properties
+            currentLevel: 0,
+            levels: [],
+            platforms: []
         };
 
         // DOM Elements
@@ -448,13 +441,14 @@
         const startButton = document.getElementById('startButton');
         const restartButton = document.getElementById('restartButton');
         const resumeButton = document.getElementById('resumeButton');
-        const mainMenuButton = document.getElementById('mainMenuButton');
-        const gameOverMainMenuButton = document.getElementById('gameOverMainMenuButton');
         const highScoresList = document.getElementById('highScoresList');
         const powerUpIndicator = document.getElementById('powerUpIndicator');
         const powerUpIcon = document.getElementById('powerUpIcon');
         const powerUpText = document.getElementById('powerUpText');
         const soundToggle = document.getElementById('soundToggle');
+        
+        // Image preloading
+        const platformImages = {};
 
         // Initialize canvas size
         function setupCanvas() {
@@ -470,135 +464,173 @@
             }
         }
 
-        // Initialize enemy images (simulating AI-generated images with SVG)
-        function initEnemyImages() {
-            // Crawler enemy - circular shape with eyes
-            gameState.enemyImages.crawler = `
-                <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="20" cy="20" r="18" fill="#ff4757"/>
-                    <circle cx="12" cy="15" r="4" fill="white"/>
-                    <circle cx="12" cy="15" r="2" fill="black"/>
-                    <circle cx="28" cy="15" r="4" fill="white"/>
-                    <circle cx="28" cy="15" r="2" fill="black"/>
-                    <path d="M 10 25 Q 20 35 30 25" stroke="black" stroke-width="2" fill="transparent"/>
-                </svg>`;
-                
-            // Hunter enemy - triangular predator shape
-            gameState.enemyImages.hunter = `
-                <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
-                    <polygon points="20,5 35,35 5,35" fill="#ffa502"/>
-                    <circle cx="15" cy="20" r="3" fill="white"/>
-                    <circle cx="15" cy="20" r="1.5" fill="black"/>
-                    <circle cx="25" cy="20" r="3" fill="white"/>
-                    <circle cx="25" cy="20" r="1.5" fill="black"/>
-                    <path d="M 15 28 Q 20 32 25 28" stroke="black" stroke-width="1.5" fill="transparent"/>
-                </svg>`;
-                
-            // Patrol enemy - square shape with determined expression
-            gameState.enemyImages.patrol = `
-                <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="5" y="5" width="30" height="30" rx="4" fill="#1e90ff"/>
-                    <circle cx="15" cy="15" r="3" fill="white"/>
-                    <circle cx="15" cy="15" r="1.5" fill="black"/>
-                    <circle cx="25" cy="15" r="3" fill="white"/>
-                    <circle cx="25" cy="15" r="1.5" fill="black"/>
-                    <rect x="12" y="25" width="16" height="4" fill="black"/>
-                </svg>`;
-        }
-
         // Initialize game
         function initGame() {
             setupCanvas();
             
-            // Create platforms first
-            generatePlatforms();
-            
-            // Create initial snake on a platform
-            const startPlatform = gameState.platforms[2]; // Middle platform
-            gameState.snake = [
-                { x: startPlatform.x + startPlatform.width / 2, 
-                  y: startPlatform.y - config.gridSize }
-            ];
-            
-            // Set initial grounded state
-            gameState.isGrounded = true;
-            
-            gameState.direction = 'right';
-            gameState.nextDirection = 'right';
-            gameState.score = 0;
-            gameState.gameOver = false;
-            // Load the player sprite if not already loaded
-            if (!gameState.spriteLoaded) {
-                loadPlayerSprite();
-            }
-            
-            // Create initial snake
-            gameState.snake = [
-                { x: Math.floor(canvas.width / config.gridSize / 2) * config.gridSize, 
-                  y: Math.floor(canvas.height / config.gridSize / 2) * config.gridSize }
-            ];
-            
-            gameState.direction = 'right';
-            gameState.nextDirection = 'right';
-            gameState.score = 0;
-            gameState.gameOver = false;
-            gameState.gameSpeed = config.initialSpeed;
-            gameState.particles = [];
-            gameState.activePowerUp = null;
-            gameState.easterEggActivated = false;
-            gameState.verticalVelocity = 0;
-            gameState.isGrounded = false;
-            
-            // Generate platforms
-            generatePlatforms();
-
-            
-            if (gameState.powerUpTimer) {
-                clearTimeout(gameState.powerUpTimer);
-                gameState.powerUpTimer = null;
-            }
-            
-            // Load high score from localStorage
-            const savedHighScore = localStorage.getItem('snakeHighScore');
-            if (savedHighScore) {
-                gameState.highScore = parseInt(savedHighScore);
-                highScoreElement.textContent = `High Score: ${gameState.highScore}`;
-            }
-            
-            // Generate initial food
-            generateFood();
-            
-            // Update score display
-            updateScore();
-            
-            // Start game loop
-            window.requestAnimationFrame(gameLoop);
-            }
-            
-            // Load high score from localStorage
-            const savedHighScore = localStorage.getItem('snakeHighScore');
-            if (savedHighScore) {
-                gameState.highScore = parseInt(savedHighScore);
-                highScoreElement.textContent = `High Score: ${gameState.highScore}`;
-            }
-            
-            // Generate initial food
-            generateFood();
-            
-            // Update score display
-            updateScore();
-            
-            // Start game loop
-            window.requestAnimationFrame(gameLoop);
+            // Load level configuration
+            loadLevelConfig()
+                .then(() => {
+                    // Select initial level
+                    setLevel(0);
+                    
+                    // Create initial snake
+                    gameState.snake = [
+                        { x: Math.floor(canvas.width / config.gridSize / 2) * config.gridSize, 
+                          y: Math.floor(canvas.height / config.gridSize / 2) * config.gridSize }
+                    ];
+                    
+                    gameState.direction = 'right';
+                    gameState.nextDirection = 'right';
+                    gameState.score = 0;
+                    gameState.gameOver = false;
+                    gameState.gameSpeed = config.initialSpeed;
+                    gameState.particles = [];
+                    gameState.activePowerUp = null;
+                    gameState.easterEggActivated = false;
+                    
+                    if (gameState.powerUpTimer) {
+                        clearTimeout(gameState.powerUpTimer);
+                        gameState.powerUpTimer = null;
+                    }
+                    
+                    // Load high score from localStorage
+                    const savedHighScore = localStorage.getItem('snakeHighScore');
+                    if (savedHighScore) {
+                        gameState.highScore = parseInt(savedHighScore);
+                        highScoreElement.textContent = `High Score: ${gameState.highScore}`;
+                    }
+                    
+                    // Generate initial food
+                    generateFood();
+                    
+                    // Update score display
+                    updateScore();
+                    
+                    // Start game loop
+                    window.requestAnimationFrame(gameLoop);
+                });
         }
+        
+        // Load level configuration from JSON
+        async function loadLevelConfig() {
+            try {
+                const response = await fetch('assets/level_config.json');
+                if (!response.ok) {
+                    throw new Error(`Failed to load level config: ${response.status}`);
+                }
+                const config = await response.json();
+                gameState.levels = config.levels;
+                gameState.platformTypes = config.platformTypes;
+                
+                // Preload platform images
+                for (const type in config.platformTypes) {
+                    preloadImage(type, config.platformTypes[type].imagePath);
+                }
+                
+                return true;
+            } catch (error) {
+                console.error('Failed to load level configuration:', error);
+                // Fallback to default level if config can't be loaded
+                gameState.levels = [{
+                    name: "Default Level",
+                    background: "",
+                    description: "Default level when configuration cannot be loaded",
+                    platforms: []
+                }];
+                gameState.platformTypes = {};
+                return true; // Return true anyway so game can start
+            }
+        }
+        
+        // Preload image
+        function preloadImage(type, path) {
+            const img = new Image();
+            img.src = path;
+            platformImages[type] = img;
+        }
+        
+        // Set current level
+        function setLevel(levelIndex) {
+            if (levelIndex >= gameState.levels.length) {
+                levelIndex = 0; // Loop back to first level
+            }
+            
+            gameState.currentLevel = levelIndex;
+            const level = gameState.levels[levelIndex];
+            
+            // Set background
+            canvas.style.backgroundImage = `url('${level.background}')`;
+            
+            // Load platforms
+            gameState.platforms = level.platforms.map(platform => {
+                // Convert platform definition to actual game objects
+                const result = [];
+                for (let x = 0; x < platform.width; x++) {
+                    for (let y = 0; y < platform.height; y++) {
+                        result.push({
+                            x: platform.x + (x * config.gridSize),
+                            y: platform.y + (y * config.gridSize),
+                            type: platform.type
+                        });
+                    }
+                }
+                return result;
+            }).flat();
+        }
+        
+        // Advance to next level
+        function advanceLevel() {
+            // Create level change effect
+            createLevelTransitionEffect();
+            
+            // Set timeout to change level
+            setTimeout(() => {
+                // Move to next level
+                setLevel((gameState.currentLevel + 1) % gameState.levels.length);
+                
+                // Generate new food in case the previous one is now inside a platform
+                generateFood();
+            }, 1000);
+        }
+        
+        // Create level transition effect
+        function createLevelTransitionEffect() {
+            // Flash effect - add overlay with fade out
+            const overlay = document.createElement('div');
+            overlay.style.position = 'absolute';
+            overlay.style.top = '0';
+            overlay.style.left = '0';
+            overlay.style.width = '100%';
+            overlay.style.height = '100%';
+            overlay.style.backgroundColor = 'rgba(233, 69, 96, 0.3)';
+            overlay.style.zIndex = '5';
+            overlay.style.pointerEvents = 'none';
+            overlay.style.transition = 'opacity 1s ease-out';
+            
+            // Add level text
+            const levelText = document.createElement('div');
+            levelText.textContent = `LEVEL ${(gameState.currentLevel + 2)}`;
+            levelText.style.position = 'absolute';
+            levelText.style.top = '50%';
+            levelText.style.left = '50%';
+            levelText.style.transform = 'translate(-50%, -50%)';
+            levelText.style.color = '#fff';
+            levelText.style.fontSize = '2rem';
+            levelText.style.fontWeight = 'bold';
+            levelText.style.textShadow = '0 0 10px rgba(233, 69, 96, 0.8)';
+            overlay.appendChild(levelText);
+            
+            document.querySelector('.game-container').appendChild(overlay);
+            
+            // Fade out after a short delay
+            setTimeout(() => {
+                overlay.style.opacity = '0';
+                setTimeout(() => {
+                    overlay.remove();
+                }, 1000);
+            }, 100);
 
-        // Load player sprite
-        function loadPlayerSprite() {
-            gameState.playerSprite = new Image();
-            gameState.playerSprite.onload = function() {
-                gameState.spriteLoaded = true;
-            };
-            gameState.playerSprite.src = 'assets/snake_head_sprite.png';
         }
 
         // Generate food at random position
@@ -794,11 +826,23 @@
             });
         }
 
-        // Check if position is occupied by snake
+        // Check if position is occupied by snake or platform
         function isPositionOccupied(position) {
-            return gameState.snake.some(segment => 
+            // Check if position is occupied by snake
+            if (gameState.snake.some(segment => 
                 segment.x === position.x && segment.y === position.y
-            );
+            )) {
+                return true;
+            }
+            
+            // Check if position is occupied by platform
+            if (gameState.platforms.some(platform => 
+                platform.x === position.x && platform.y === position.y
+            )) {
+                return true;
+            }
+            
+            return false;
         }
 
         // Update game state
@@ -851,6 +895,15 @@
                 }
             }
             
+            // Check for platform collision
+            if (gameState.platforms.some(platform => 
+                platform.x === head.x && platform.y === head.y)) {
+                if (!(gameState.activePowerUp && gameState.activePowerUp.type === 'immunity')) {
+                    handleGameOver();
+                    return;
+                }
+            }
+            
             // Add new head to snake
             gameState.snake.unshift(head);
             
@@ -881,6 +934,11 @@
                 // Increase speed slightly
                 if (gameState.gameSpeed > config.maxSpeed) {
                     gameState.gameSpeed -= config.speedIncrease;
+                }
+                
+                // Check if should advance level (every 50 points)
+                if (gameState.score % 50 === 0 && gameState.levels.length > 1) {
+                    advanceLevel();
                 }
             } 
             // Check for power-up collision
@@ -1336,27 +1394,19 @@
             });
         }
 
+
         // Draw game elements
         function draw() {
             // Clear canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
             // Draw platforms
-            gameState.platforms.forEach(platform => {
-                ctx.fillStyle = platform.color;
-                ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
-            });
+            drawPlatforms();
             
             // Draw snake
             gameState.snake.forEach((segment, index) => {
-                // Head has different style and shows grounded state
+                // Head has different style
                 if (index === 0) {
-                    // Add glow effect when grounded (can jump)
-                    if (gameState.isGrounded) {
-                        ctx.shadowColor = '#00ff00';
-                        ctx.shadowBlur = 10;
-                    }
-                    
                     ctx.fillStyle = gameState.easterEggActivated ? 
                         `hsl(${(Date.now() / 20) % 360}, 100%, 50%)` : '#e94560';
                 } else {
@@ -1371,6 +1421,7 @@
                 ctx.shadowColor = gameState.easterEggActivated ? 
                     `hsl(${(Date.now() / 20 + index * 10) % 360}, 100%, 50%)` : 
                     'rgba(233, 69, 96, 0.8)';
+
                 ctx.shadowBlur = 10;
                 
                 // Draw rounded rectangle for segment
@@ -1560,53 +1611,31 @@
                 ctx.fill();
             });
             
-            // Draw enemies
-            gameState.enemies.forEach(enemy => {
-                // Create pulsating effect based on enemy animation offset
-                const pulseFactor = 1 + 0.1 * Math.sin((Date.now() + enemy.animationOffset) / 200);
-                const size = config.gridSize * enemy.size * pulseFactor;
-                
-                // Apply glow effect
-                ctx.shadowColor = enemy.color;
-                ctx.shadowBlur = 10;
-                
-                // Create SVG image if not already cached
-                if (!enemy.svgImage) {
-                    // Create a data URL from the SVG
-                    const svgBlob = new Blob([gameState.enemyImages[enemy.image]], { type: 'image/svg+xml' });
-                    const url = URL.createObjectURL(svgBlob);
-                    
-                    // Create and cache the image
-                    const img = new Image();
-                    img.src = url;
-                    enemy.svgImage = { img, url };
-                }
-                
-                // If the image is loaded, draw it
-                if (enemy.svgImage && enemy.svgImage.img.complete) {
-                    ctx.drawImage(
-                        enemy.svgImage.img,
-                        enemy.x - (size - config.gridSize) / 2,
-                        enemy.y - (size - config.gridSize) / 2,
-                        size,
-                        size
-                    );
-                } else {
-                    // Fallback if image not loaded yet
-                    ctx.fillStyle = enemy.color;
-                    ctx.beginPath();
-                    ctx.arc(
-                        enemy.x + config.gridSize / 2,
-                        enemy.y + config.gridSize / 2,
-                        size / 2, 0, Math.PI * 2
-                    );
-                    ctx.fill();
-                }
-                
-                ctx.shadowBlur = 0;
-            });
-            
+
             ctx.globalAlpha = 1;
+        }
+        
+        // Draw platforms
+        function drawPlatforms() {
+            gameState.platforms.forEach(platform => {
+                const platformType = gameState.platformTypes[platform.type];
+                if (platformType) {
+                    // Check if we have images loaded
+                    const platformImg = platformImages[platform.type];
+                    if (platformImg && platformImg.complete) {
+                        // Draw image
+                        ctx.drawImage(platformImg, platform.x, platform.y, config.gridSize, config.gridSize);
+                    } else {
+                        // Fallback to colored rectangle
+                        ctx.fillStyle = platformType.color;
+                        ctx.shadowColor = platformType.color;
+                        ctx.shadowBlur = 10;
+                        ctx.fillRect(platform.x, platform.y, config.gridSize, config.gridSize);
+                        ctx.shadowBlur = 0;
+                    }
+                }
+            });
+
         }
 
         // Game loop

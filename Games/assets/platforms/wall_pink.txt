@@ -1,0 +1,17 @@
+# Pink Wall Platform Element
+
+**AI Image Generation Prompt:**
+"Create a single 20x20 pixel block with a dark center and glowing pink neon outline in cyberpunk style. The core should be dark (#1a1a2e) with a vibrant pink (#e94560) glowing border that appears to emit light. The glow should extend slightly beyond the solid border."
+
+**Purpose:** Wall element/obstacle for Snake game levels.
+
+**Technical Requirements:**
+- Resolution: 20x20 pixels
+- Format: PNG with transparency
+- Primary colors: Dark blue (#1a1a2e), Neon pink (#e94560)
+
+**Style Notes:**
+- Should appear as a solid block with a neon outline
+- The glow effect should be noticeable but not overwhelming
+- Should match the overall game aesthetic
+- Will be used as a wall element that blocks the snake's path

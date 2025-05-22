@@ -1,0 +1,17 @@
+# Circuit Board Background
+
+**AI Image Generation Prompt:**
+"Generate a dark circuit board pattern with glowing red and pink traces on a deep blue background. The circuit traces should form complex patterns reminiscent of technology and data flow. Resolution 600x400 pixels. Color scheme should include deep blue (#16213e) as background with neon red/pink (#e94560) traces and highlights. Include some subtle focal points that don't distract from gameplay."
+
+**Purpose:** Background for Level 2 of the Snake game.
+
+**Technical Requirements:**
+- Resolution: 600x400 pixels
+- Format: PNG with transparency
+- Primary colors: Deep blue (#16213e), Neon red/pink (#e94560)
+
+**Style Notes:**
+- Should resemble a technological circuit board with traces and connections
+- Glowing effect on the circuit traces
+- Dark atmosphere with precise neon elements
+- Should create depth without interfering with gameplay elements
