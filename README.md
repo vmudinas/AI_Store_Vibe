@@ -12,3 +12,4 @@ https://www.youtube.com/watch?v=cOt79RWZ3yU&ab_channel=Vitas
 - Different food types with varying points
 - Enemy characters with AI movement patterns
 - Particle effects and visual polish
+
