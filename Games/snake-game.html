@@ -225,6 +225,18 @@
         .high-scores li {
             margin: 5px 0;
         }
+        
+        .collectibles-summary {
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(10, 10, 20, 0.6);
+            border-radius: 10px;
+            display: inline-block;
+        }
+        
+        .collectibles-summary .collectible-icon {
+            margin: 0 3px 0 8px;
+        }
 
         .power-up-indicator {
             position: absolute;
@@ -267,6 +279,39 @@
             align-items: center;
             cursor: pointer;
             z-index: 5;
+        }
+
+        .collectibles-container {
+            width: 100%;
+            max-width: 600px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            padding: 10px 0;
+            margin-bottom: 10px;
+            color: #fff;
+            font-size: 18px;
+            text-shadow: 0 0 5px rgba(233, 69, 96, 0.7);
+        }
+
+        .collectible-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(10, 10, 20, 0.6);
+            padding: 5px 10px;
+            border-radius: 20px;
+            box-shadow: 0 0 10px rgba(233, 69, 96, 0.3);
+            transition: transform 0.2s ease;
+        }
+        
+        .collectible-item:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(233, 69, 96, 0.5);
+        }
+
+        .collectible-icon {
+            font-size: 1.2rem;
         }
 
         @media (max-width: 600px) {
@@ -323,6 +368,21 @@
         <div id="high-score">High Score: 0</div>
     </div>
     
+    <div class="collectibles-container" id="collectiblesContainer">
+        <div class="collectible-item">
+            <span class="collectible-icon">🪙</span>
+            <span id="coinCount">0</span>
+        </div>
+        <div class="collectible-item">
+            <span class="collectible-icon">💎</span>
+            <span id="gemCount">0</span>
+        </div>
+        <div class="collectible-item">
+            <span class="collectible-icon">🔑</span>
+            <span id="keyCount">0</span>
+        </div>
+    </div>
+    
     <div class="game-container">
         <canvas id="gameCanvas"></canvas>
         
@@ -332,30 +392,30 @@
         </div>
         
         <button class="sound-toggle" id="soundToggle">🔊</button>
-
+        
         <div class="start-screen" id="startScreen">
             <h1>Enhanced Snake Game</h1>
             <p>Use Arrow Keys or WASD to move</p>
             <p>Collect food to grow and earn points</p>
-            <p>Watch out for special power-ups!</p>
-            <p>Avoid walls and obstacles that appear in different levels</p>
-            <p>Every 50 points advances you to a new level!</p>
+            <p>Grab power-ups for special abilities!</p>
+            <p>Find coins, gems and keys for bonus points!</p>
             <button id="startButton">Start Game</button>
             <div class="controls">
                 <p>P: Pause Game | M: Toggle Sound</p>
             </div>
-
         </div>
         
         <div class="game-over hidden" id="gameOverScreen">
-            <h2 class="game-over-title">Game Over</h2>
-            <div class="score-display">
-                <p>Your Score: <span id="finalScore" class="highlight-score">0</span></p>
+            <h2>Game Over</h2>
+            <p>Your Score: <span id="finalScore">0</span></p>
+            <div class="collectibles-summary">
+                <p>Collectibles: 
+                    <span class="collectible-icon">🪙</span> <span id="finalCoins">0</span>
+                    <span class="collectible-icon">💎</span> <span id="finalGems">0</span>
+                    <span class="collectible-icon">🔑</span> <span id="finalKeys">0</span>
+                </p>
             </div>
-            <div class="menu-options">
-                <button id="restartButton" class="pulse-btn">Play Again</button>
-                <button id="gameOverMainMenuButton" class="menu-btn">Main Menu</button>
-            </div>
+            <button id="restartButton">Play Again</button>
             
             <div class="high-scores">
                 <h3>High Scores</h3>
@@ -394,7 +454,6 @@
             platformHeight: 10          // Height of platforms
         };
 
-
         // Game State
         const gameState = {
             snake: [],
@@ -409,6 +468,12 @@
             lastRenderTime: 0,
             gameSpeed: config.initialSpeed,
             powerUp: null,
+            collectible: null,
+            collectedItems: {
+                coins: 0,
+                gems: 0,
+                keys: 0
+            },
             particles: [],
             foodTypes: [
                 { type: 'regular', color: '#e94560', points: 1, probability: 0.7, size: 1 },
@@ -421,15 +486,16 @@
                 { type: 'immunity', color: '#00b8a9', duration: 8000, icon: '🛡️' },
                 { type: 'multiplier', color: '#8a2be2', duration: 10000, icon: '✖️' }
             ],
+            collectibleTypes: [
+                { type: 'coin', color: '#ffd700', points: 10, probability: 0.6, size: 0.8, icon: '🪙' },
+                { type: 'gem', color: '#00ffff', points: 25, probability: 0.3, size: 0.9, icon: '💎' },
+                { type: 'key', color: '#ffb145', points: 50, probability: 0.1, size: 1.0, icon: '🔑' }
+            ],
             activePowerUp: null,
             powerUpTimer: null,
             konami: [38, 38, 40, 40, 37, 39, 37, 39, 66, 65], // Up Up Down Down Left Right Left Right B A
             konamiIndex: 0,
-            easterEggActivated: false,
-            // Add level-related properties
-            currentLevel: 0,
-            levels: [],
-            platforms: []
+            easterEggActivated: false
         };
 
         // DOM Elements
@@ -450,9 +516,12 @@
         const powerUpIcon = document.getElementById('powerUpIcon');
         const powerUpText = document.getElementById('powerUpText');
         const soundToggle = document.getElementById('soundToggle');
-        
-        // Image preloading
-        const platformImages = {};
+        const coinCountElement = document.getElementById('coinCount');
+        const gemCountElement = document.getElementById('gemCount');
+        const keyCountElement = document.getElementById('keyCount');
+        const finalCoinsElement = document.getElementById('finalCoins');
+        const finalGemsElement = document.getElementById('finalGems');
+        const finalKeysElement = document.getElementById('finalKeys');
 
         // Initialize canvas size
         function setupCanvas() {
@@ -472,7 +541,6 @@
         function initGame() {
             setupCanvas();
             
-
             // Create initial snake
             gameState.snake = [
                 { x: Math.floor(canvas.width / config.gridSize / 2) * config.gridSize, 
@@ -486,13 +554,26 @@
             gameState.gameSpeed = config.initialSpeed;
             gameState.particles = [];
             gameState.activePowerUp = null;
+
+            gameState.collectible = null;
+            gameState.collectedItems = {
+                coins: 0,
+                gems: 0,
+                keys: 0
+            };
+            gameState.easterEggActivated = false;
+            
+            // Update collectibles display
+            coinCountElement.textContent = '0';
+            gemCountElement.textContent = '0';
+            keyCountElement.textContent = '0';
+
             gameState.easterEggActivated = false;
             gameState.lives = 3; // Reset lives to initial amount
             
             if (gameState.powerUpTimer) {
                 clearTimeout(gameState.powerUpTimer);
                 gameState.powerUpTimer = null;
-
             }
         }
         
@@ -538,19 +619,14 @@
                 }
             }
             
-            // Generate random position that doesn't overlap with snake or platforms
+            // Generate random position that doesn't overlap with snake
             let position;
-            let validPosition = false;
-            
-            while (!validPosition) {
+            do {
                 position = {
                     x: Math.floor(Math.random() * (canvas.width / config.gridSize)) * config.gridSize,
                     y: Math.floor(Math.random() * (canvas.height / config.gridSize)) * config.gridSize
                 };
-                
-                // Check if position is not on a platform and not occupied by snake
-                validPosition = !isPositionOccupied(position) && !isPositionOnPlatform(position);
-            }
+            } while (isPositionOccupied(position));
             
             gameState.food = { ...position, type: foodType };
             
@@ -558,6 +634,40 @@
             if (!gameState.activePowerUp && Math.random() < 0.1) {
                 generatePowerUp();
             }
+            
+            // Occasionally spawn a collectible (15% chance when no active collectible)
+            if (!gameState.collectible && Math.random() < 0.15) {
+                generateCollectible();
+            }
+        }
+
+        // Generate collectible at random position
+        function generateCollectible() {
+            // Select random collectible type based on probability
+            let collectibleType;
+            const rand = Math.random();
+            let cumulativeProbability = 0;
+            
+            for (const type of gameState.collectibleTypes) {
+                cumulativeProbability += type.probability;
+                if (rand <= cumulativeProbability) {
+                    collectibleType = type;
+                    break;
+                }
+            }
+            
+            // Generate random position that doesn't overlap with snake, food, or power-up
+            let position;
+            do {
+                position = {
+                    x: Math.floor(Math.random() * (canvas.width / config.gridSize)) * config.gridSize,
+                    y: Math.floor(Math.random() * (canvas.height / config.gridSize)) * config.gridSize
+                };
+            } while (isPositionOccupied(position) || 
+                    (position.x === gameState.food.x && position.y === gameState.food.y) ||
+                    (gameState.powerUp && position.x === gameState.powerUp.x && position.y === gameState.powerUp.y));
+            
+            gameState.collectible = { ...position, ...collectibleType };
         }
 
         // Generate power-up at random position
@@ -1133,6 +1243,11 @@
                 activatePowerUp(gameState.powerUp);
                 gameState.powerUp = null;
             }
+            // Check for collectible collision
+            else if (gameState.collectible && head.x === gameState.collectible.x && head.y === gameState.collectible.y) {
+                collectItem(gameState.collectible);
+                gameState.collectible = null;
+            }
             else {
                 // Remove tail if no food was eaten
                 gameState.snake.pop();
@@ -1185,6 +1300,41 @@
             powerUpIndicator.classList.remove('active');
         }
 
+        // Collect item
+        function collectItem(collectible) {
+            // Update collected items count
+            switch(collectible.type) {
+                case 'coin':
+                    gameState.collectedItems.coins++;
+                    coinCountElement.textContent = gameState.collectedItems.coins;
+                    break;
+                case 'gem':
+                    gameState.collectedItems.gems++;
+                    gemCountElement.textContent = gameState.collectedItems.gems;
+                    break;
+                case 'key':
+                    gameState.collectedItems.keys++;
+                    keyCountElement.textContent = gameState.collectedItems.keys;
+                    break;
+            }
+            
+            // Add points
+            gameState.score += collectible.points;
+            updateScore();
+            
+            // Create particles
+            createParticles(
+                collectible.x + config.gridSize/2, 
+                collectible.y + config.gridSize/2, 
+                collectible.color, 
+                15
+            );
+            
+            // Play collection sound
+            if (config.soundEnabled) {
+                // Sound effect could be added here if needed
+            }
+        }
 
         // Create particles
         function createParticles(x, y, color, count) {
@@ -1298,6 +1448,20 @@
                 // Player still has lives - reset snake and continue
                 resetSnakePosition();
             }
+            
+            // Update final score
+            finalScoreElement.textContent = gameState.score;
+            
+            // Update collected items
+            finalCoinsElement.textContent = gameState.collectedItems.coins;
+            finalGemsElement.textContent = gameState.collectedItems.gems;
+            finalKeysElement.textContent = gameState.collectedItems.keys;
+            
+            // Update high scores list
+            updateHighScoresList();
+            
+            // Show game over screen
+            gameOverScreen.classList.remove('hidden');
         }
 
         // Update score display
@@ -1382,81 +1546,6 @@
                 
                 // Reset shadow for other elements
                 ctx.shadowBlur = 0;
-        function draw() {
-            // Clear canvas
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // Draw snake
-            gameState.snake.forEach((segment, index) => {
-                // Head has different style (use sprite for head)
-                if (index === 0 && gameState.spriteLoaded) {
-                    // Save the current canvas state
-                    ctx.save();
-                    
-                    // Translate to the center of the head segment for rotation
-                    const centerX = segment.x + config.gridSize / 2;
-                    const centerY = segment.y + config.gridSize / 2;
-                    ctx.translate(centerX, centerY);
-                    
-                    // Rotate based on direction
-                    switch(gameState.direction) {
-                        case 'up':
-                            ctx.rotate(-Math.PI/2); // 90 degrees counter-clockwise
-                            break;
-                        case 'down':
-                            ctx.rotate(Math.PI/2); // 90 degrees clockwise
-                            break;
-                        case 'left':
-                            ctx.rotate(Math.PI); // 180 degrees
-                            break;
-                        case 'right':
-                            // No rotation needed as this is the default
-                            break;
-                    }
-                    
-                    // Translate back for drawing
-                    ctx.translate(-centerX, -centerY);
-                    
-                    // Apply color tint for easter egg if active
-                    if (gameState.easterEggActivated) {
-                        // Create a colored rectangle for tinting
-                        ctx.fillStyle = `hsl(${(Date.now() / 20) % 360}, 100%, 50%)`;
-                        ctx.globalAlpha = 0.7;
-                        ctx.fillRect(segment.x, segment.y, config.gridSize, config.gridSize);
-                        
-                        // Draw the sprite with composition
-                        ctx.globalCompositeOperation = "lighter";
-                        ctx.globalAlpha = 1.0;
-                        ctx.drawImage(gameState.playerSprite, segment.x, segment.y, config.gridSize, config.gridSize);
-                    } else {
-                        // Draw the sprite normally with glow effect
-                        ctx.shadowColor = 'rgba(233, 69, 96, 0.8)';
-                        ctx.shadowBlur = 10;
-                        ctx.drawImage(gameState.playerSprite, segment.x, segment.y, config.gridSize, config.gridSize);
-                        ctx.shadowBlur = 0;
-                    }
-                    
-                    // Restore the canvas state
-                    ctx.restore();
-                } else {
-                    // Body segments remain the same
-                    if (index === 0) {
-                        // Fallback for head if sprite isn't loaded
-                        ctx.fillStyle = gameState.easterEggActivated ? 
-                            `hsl(${(Date.now() / 20) % 360}, 100%, 50%)` : '#e94560';
-                    } else {
-                        // Body segments get progressively darker
-                        const alpha = 1 - (index / gameState.snake.length) * 0.6;
-                        ctx.fillStyle = gameState.easterEggActivated ? 
-                            `hsla(${(Date.now() / 20 + index * 10) % 360}, 100%, 50%, ${alpha})` : 
-                            `rgba(233, 69, 96, ${alpha})`;
-                    }
-                    
-                    // Draw segment with glow effect
-                    ctx.shadowColor = gameState.easterEggActivated ? 
-                        `hsl(${(Date.now() / 20 + index * 10) % 360}, 100%, 50%)` : 
-                        'rgba(233, 69, 96, 0.8)';
-                    ctx.shadowBlur = 10;
                     
                     // Draw rounded rectangle for segment
                     const radius = 4;
@@ -1539,6 +1628,68 @@
                 
                 ctx.closePath();
                 ctx.fill();
+                
+                ctx.shadowBlur = 0;
+            }
+            
+            // Draw collectible if active
+            if (gameState.collectible) {
+                ctx.fillStyle = gameState.collectible.color;
+                
+                // Pulsating effect
+                const pulseFactor = 1 + 0.2 * Math.sin(Date.now() / 200);
+                const size = config.gridSize * gameState.collectible.size * pulseFactor;
+                
+                // Draw with glow
+                ctx.shadowColor = gameState.collectible.color;
+                ctx.shadowBlur = 15;
+                
+                const centerX = gameState.collectible.x + config.gridSize / 2;
+                const centerY = gameState.collectible.y + config.gridSize / 2;
+                
+                // Draw collectible based on type
+                switch(gameState.collectible.type) {
+                    case 'coin':
+                        // Draw coin (circle)
+                        ctx.beginPath();
+                        ctx.arc(centerX, centerY, size / 2, 0, Math.PI * 2);
+                        ctx.fill();
+                        
+                        // Add details to make it look like a coin
+                        ctx.strokeStyle = '#ffaa00';
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.arc(centerX, centerY, size / 3, 0, Math.PI * 2);
+                        ctx.stroke();
+                        break;
+                        
+                    case 'gem':
+                        // Draw gem (diamond shape)
+                        ctx.beginPath();
+                        ctx.moveTo(centerX, centerY - size / 2); // Top
+                        ctx.lineTo(centerX + size / 2, centerY); // Right
+                        ctx.lineTo(centerX, centerY + size / 2); // Bottom
+                        ctx.lineTo(centerX - size / 2, centerY); // Left
+                        ctx.closePath();
+                        ctx.fill();
+                        break;
+                        
+                    case 'key':
+                        // Draw key
+                        ctx.beginPath();
+                        
+                        // Key head (circle)
+                        ctx.arc(centerX - size / 4, centerY, size / 4, 0, Math.PI * 2);
+                        
+                        // Key stem
+                        ctx.rect(centerX - size / 4, centerY - size / 8, size / 2, size / 4);
+                        
+                        // Key teeth
+                        ctx.rect(centerX + size / 4 - size / 8, centerY - size / 4, size / 4, size / 2);
+                        
+                        ctx.fill();
+                        break;
+                }
                 
                 ctx.shadowBlur = 0;
             }

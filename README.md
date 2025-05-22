@@ -7,6 +7,12 @@ Done with CLONE => Claude 3.7 model. One shot, coded in less than 20 min.
 https://www.youtube.com/watch?v=cOt79RWZ3yU&ab_channel=Vitas
 
 ### Features
+
+- Classic snake gameplay with modern visual effects
+- Power-ups with special abilities
+- Collectible items (coins, gems, keys) for bonus points
+- Responsive design for any screen size
+
 - Classic snake gameplay with modern visuals
 
 - Power-ups and special food types
@@ -21,3 +27,4 @@ The game includes AI-generated visual elements:
 - All assets follow a consistent cyberpunk/neon aesthetic
 
 To update/generate the actual AI images, see the descriptions in the `/Games/assets/` directory.
+
